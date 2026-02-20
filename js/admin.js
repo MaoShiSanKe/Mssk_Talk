@@ -28,8 +28,11 @@
   let showBlocked = false;
   let searchKeyword = '';
   let currentPage = 1;
-  const PAGE_SIZE = 10;
+  const PAGE_SIZE = 10;       // 用户分组分页
+  const MSG_PAGE_SIZE = 5;    // 每个用户组内消息分页
   let allMessages = [];
+  // 记录每个用户组当前展开状态和消息页码
+  const groupState = {}; // { [vid]: { open: bool, page: number } }
 
   // ── 登录 ───────────────────────────────────────────────────
   const authed = sessionStorage.getItem(CONFIG.storage.adminAuthed) === '1';
@@ -43,7 +46,6 @@
     loginBtn.disabled = true;
     loginBtn.textContent = '验证中…';
     loginError.style.display = 'none';
-
     const pw = passwordInput.value;
     try {
       const res = await fetch('/api/auth', {
@@ -83,10 +85,7 @@
   function enterAdmin() {
     loginScreen.style.display = 'none';
     adminScreen.style.display = 'block';
-    setTimeout(() => {
-      loadStats();
-      fetchAndRender();
-    }, 0);
+    setTimeout(() => { loadStats(); fetchAndRender(); }, 0);
   }
 
   // ── 过滤器 ─────────────────────────────────────────────────
@@ -148,7 +147,7 @@
     }
   }
 
-  // ── 渲染（搜索+分页在前端做）─────────────────────────────
+  // ── 渲染消息列表 ───────────────────────────────────────────
   function renderMessages() {
     let filtered = allMessages;
     if (searchKeyword) {
@@ -165,6 +164,7 @@
       return;
     }
 
+    // 分组
     const grouped = {};
     for (const m of filtered) {
       const vid = m.visitor_id ?? 'unknown';
@@ -175,7 +175,6 @@
     const groupEntries = Object.entries(grouped);
     const totalPages = Math.ceil(groupEntries.length / PAGE_SIZE);
     currentPage = Math.min(currentPage, Math.max(1, totalPages));
-
     const pageEntries = groupEntries.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
     messageList.innerHTML = pageEntries
@@ -186,7 +185,7 @@
     bindActions();
   }
 
-  // ── 分页 ───────────────────────────────────────────────────
+  // ── 用户分组外层分页 ───────────────────────────────────────
   function renderPagination(totalPages) {
     if (totalPages <= 1) { paginationEl.innerHTML = ''; return; }
     let html = '';
@@ -203,37 +202,77 @@
     });
   }
 
-  // ── 渲染访客分组 ───────────────────────────────────────────
+  // ── 渲染单个用户分组（折叠/展开 + 组内分页）──────────────
   function renderVisitorGroup(vid, messages, meta) {
     const isBlocked = meta?.is_blocked ?? false;
     const note = meta?.note ?? '';
     const shortId = vid === 'unknown' ? 'unknown' : vid.slice(0, 8);
     const unreadCount = messages.filter(m => !m.is_read).length;
+    const totalCount = messages.length;
+
+    // 初始化该组状态
+    if (!groupState[vid]) groupState[vid] = { open: false, page: 1 };
+    const state = groupState[vid];
+
+    // 最新一条消息作为预览（messages 已按 created_at desc 排序）
+    const preview = messages[0];
+    const previewText = preview?.content?.slice(0, 60) + (preview?.content?.length > 60 ? '…' : '');
+
+    // 组内分页
+    const totalMsgPages = Math.ceil(totalCount / MSG_PAGE_SIZE);
+    state.page = Math.min(state.page, Math.max(1, totalMsgPages));
+    const pageMsgs = messages.slice((state.page - 1) * MSG_PAGE_SIZE, state.page * MSG_PAGE_SIZE);
 
     return `
     <div class="visitor-group ${isBlocked ? 'blocked' : ''}" data-visitor-id="${vid}">
-      <div class="visitor-header">
+
+      <!-- 标题栏（可点击折叠/展开） -->
+      <div class="visitor-header group-toggle" data-vid="${vid}" style="cursor:pointer">
         <div class="visitor-info">
+          <span class="toggle-arrow">${state.open ? '▾' : '▸'}</span>
           <span class="visitor-id">${I18n.t('admin.visitor_id')} #${shortId}</span>
           ${isBlocked ? `<span class="badge blocked">${I18n.t('admin.blocked_badge')}</span>` : ''}
           ${unreadCount > 0 ? `<span class="badge unread">${I18n.t('admin.unread_badge')} ${unreadCount}</span>` : ''}
+          <span class="msg-count">${totalCount} 条</span>
         </div>
-        <div class="visitor-actions">
+        <div class="visitor-actions" onclick="event.stopPropagation()">
           ${vid !== 'unknown' ? `
           <button class="btn-block" data-vid="${vid}" data-blocked="${isBlocked}">
             ${isBlocked ? I18n.t('admin.unblock_user') : I18n.t('admin.block_user')}
           </button>` : ''}
         </div>
       </div>
-      ${vid !== 'unknown' ? `
-      <div class="note-area">
-        <input type="text" class="note-input" data-vid="${vid}" value="${escapeAttr(note)}"
-          placeholder="${I18n.t('admin.note_placeholder')}">
-        <button class="btn-note" data-vid="${vid}">${I18n.t('admin.save_note')}</button>
+
+      <!-- 折叠时显示预览 -->
+      ${!state.open ? `
+      <div class="group-preview" data-vid="${vid}" style="cursor:pointer">
+        <span class="preview-text">${escapeHtml(previewText)}</span>
+        <span class="preview-time">${formatTime(preview?.created_at)}</span>
       </div>` : ''}
-      <div class="message-thread">
-        ${messages.map(m => renderMessage(m)).join('')}
-      </div>
+
+      <!-- 展开时显示详情 -->
+      ${state.open ? `
+      <div class="group-detail">
+        ${vid !== 'unknown' ? `
+        <div class="note-area">
+          <input type="text" class="note-input" data-vid="${vid}" value="${escapeAttr(note)}"
+            placeholder="${I18n.t('admin.note_placeholder')}">
+          <button class="btn-note" data-vid="${vid}">${I18n.t('admin.save_note')}</button>
+        </div>` : ''}
+
+        <div class="message-thread">
+          ${pageMsgs.map(m => renderMessage(m)).join('')}
+        </div>
+
+        ${totalMsgPages > 1 ? `
+        <div class="msg-pagination">
+          ${Array.from({length: totalMsgPages}, (_, i) => i + 1).map(i => `
+            <button class="page-btn ${i === state.page ? 'active' : ''} msg-page-btn"
+              data-vid="${vid}" data-page="${i}">${i}</button>
+          `).join('')}
+        </div>` : ''}
+      </div>` : ''}
+
     </div>`;
   }
 
@@ -256,9 +295,32 @@
     </div>`;
   }
 
+  // ── 事件绑定 ───────────────────────────────────────────────
   function bindActions() {
+    // 折叠/展开
+    document.querySelectorAll('.group-toggle, .group-preview').forEach(el => {
+      el.addEventListener('click', () => {
+        const vid = el.dataset.vid;
+        if (!groupState[vid]) groupState[vid] = { open: false, page: 1 };
+        groupState[vid].open = !groupState[vid].open;
+        renderMessages();
+      });
+    });
+
+    // 组内消息翻页
+    document.querySelectorAll('.msg-page-btn').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const vid = btn.dataset.vid;
+        groupState[vid].page = parseInt(btn.dataset.page);
+        renderMessages();
+      });
+    });
+
+    // 标为已读
     document.querySelectorAll('.btn-read').forEach(btn => {
-      btn.addEventListener('click', async () => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
         await DB.adminMarkRead(btn.dataset.msgId);
         const msg = allMessages.find(m => m.id === btn.dataset.msgId);
         if (msg) msg.is_read = true;
@@ -268,29 +330,29 @@
       });
     });
 
+    // 屏蔽/解除屏蔽用户
     document.querySelectorAll('.btn-block').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
         const isBlocked = btn.dataset.blocked === 'true';
         if (!isBlocked) {
-          // 屏蔽用户时弹出确认
           showBlockConfirm(btn.dataset.vid);
         } else {
-          // 解除屏蔽直接执行
           DB.adminBlockVisitor(btn.dataset.vid, false, false).then(() => {
-            fetchAndRender();
-            loadStats();
+            fetchAndRender(); loadStats();
           });
         }
       });
     });
 
+    // 屏蔽/解除屏蔽消息
     document.querySelectorAll('.btn-block-msg').forEach(btn => {
-      btn.addEventListener('click', async () => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
         const isBlocked = btn.dataset.blocked === 'true';
         await DB.adminBlockMessage(btn.dataset.msgId, !isBlocked);
         const msg = allMessages.find(m => m.id === btn.dataset.msgId);
         if (msg) msg.is_blocked = !isBlocked;
-        // 如果当前不显示已屏蔽，屏蔽后从列表移除
         if (!showBlocked && !isBlocked) {
           btn.closest('.message-item').remove();
         } else {
@@ -300,8 +362,10 @@
       });
     });
 
+    // 保存备注
     document.querySelectorAll('.btn-note').forEach(btn => {
-      btn.addEventListener('click', async () => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
         const note = btn.closest('.note-area').querySelector('.note-input').value;
         await DB.adminSaveNote(btn.dataset.vid, note);
         allMessages.forEach(m => {
@@ -335,7 +399,6 @@
       </div>
     `;
     document.body.appendChild(dialog);
-
     document.getElementById('confirm-cancel').addEventListener('click', () => dialog.remove());
     document.getElementById('confirm-ok').addEventListener('click', async () => {
       const blockMessages = document.getElementById('block-msgs-check').checked;
@@ -344,8 +407,6 @@
       await fetchAndRender();
       loadStats();
     });
-
-    // 点击遮罩关闭
     dialog.addEventListener('click', e => { if (e.target === dialog) dialog.remove(); });
   }
 

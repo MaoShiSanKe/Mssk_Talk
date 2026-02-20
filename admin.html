@@ -242,6 +242,61 @@
       border-color: var(--accent);
     }
 
+    /* 折叠箭头和消息数 */
+    .toggle-arrow {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-right: 2px;
+    }
+
+    .msg-count {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-left: 6px;
+    }
+
+    /* 折叠预览 */
+    .group-preview {
+      padding: 10px 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      border-top: 1px solid var(--border);
+    }
+
+    .group-preview:hover { background: #fafafa; }
+
+    .preview-text {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      flex: 1;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    .preview-time {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* 展开区域 */
+    .group-detail {
+      border-top: 1px solid var(--border);
+    }
+
+    /* 组内消息分页 */
+    .msg-pagination {
+      display: flex;
+      gap: 4px;
+      padding: 10px 16px;
+      border-top: 1px solid var(--border);
+      background: #fafafa;
+    }
+
     /* 访客分组 */
     .visitor-group {
       background: var(--surface);
