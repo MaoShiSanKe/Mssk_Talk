@@ -15,9 +15,12 @@ const Visitor = (() => {
         _id = stored;
         return _id;
       }
+      // 存在但数据库找不到，清除旧值重新创建
+      localStorage.removeItem(CONFIG.storage.visitorId);
     }
     // 新建访客
     const visitor = await DB.createVisitor();
+    if (!visitor?.id) throw new Error('createVisitor returned empty');
     _id = visitor.id;
     localStorage.setItem(CONFIG.storage.visitorId, _id);
     return _id;

@@ -1,4 +1,4 @@
-# mssk-message
+# Mssk_Talk
 
 匿名留言板，基于 Cloudflare Pages + Supabase。
 
