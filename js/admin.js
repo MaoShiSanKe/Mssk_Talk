@@ -1,7 +1,6 @@
 // js/admin.js — 管理后台逻辑
 
 (async () => {
-  // 加载服务端配置（admin 也需要 supabase url 等）
   try {
     await CONFIG.init();
   } catch (e) {
@@ -11,17 +10,33 @@
 
   await I18n.load(CONFIG.defaultLang);
 
-  // ── 登录状态 ───────────────────────────────────────────────
+  // ── DOM 引用 ───────────────────────────────────────────────
   const loginScreen = document.getElementById('login-screen');
   const adminScreen = document.getElementById('admin-screen');
   const passwordInput = document.getElementById('password-input');
   const loginBtn = document.getElementById('login-btn');
   const loginError = document.getElementById('login-error');
   const logoutBtn = document.getElementById('logout-btn');
+  const filterAll = document.getElementById('filter-all');
+  const filterUnread = document.getElementById('filter-unread');
+  const messageList = document.getElementById('message-list');
+  const searchInput = document.getElementById('search-input');
+  const paginationEl = document.getElementById('pagination');
 
-  // session 内记住已验证状态（刷新需重新登录）
+  // ── 状态 ───────────────────────────────────────────────────
+  let showUnreadOnly = false;
+  let searchKeyword = '';
+  let currentPage = 1;
+  const PAGE_SIZE = 10;
+  let allMessages = [];
+
+  // ── 登录 ───────────────────────────────────────────────────
   const authed = sessionStorage.getItem(CONFIG.storage.adminAuthed) === '1';
-  if (authed) showAdmin();
+  if (authed) {
+    enterAdmin();
+  } else {
+    loginScreen.style.display = 'flex';
+  }
 
   loginBtn.addEventListener('click', async () => {
     loginBtn.disabled = true;
@@ -37,10 +52,10 @@
       });
       const data = await res.json();
       if (data.ok) {
-        // 密码存在 sessionStorage 供后续 admin API 调用使用
         sessionStorage.setItem(CONFIG.storage.adminAuthed, '1');
         sessionStorage.setItem('mssk_admin_pw', pw);
-        showAdmin();
+        loginScreen.style.display = 'none';
+        enterAdmin();
       } else {
         loginError.textContent = I18n.t('admin.login_error');
         loginError.style.display = 'block';
@@ -64,30 +79,41 @@
     location.reload();
   });
 
-  function showAdmin() {
+  function enterAdmin() {
     loginScreen.style.display = 'none';
     adminScreen.style.display = 'block';
-    loadStats();
-    loadMessages();
+    setTimeout(() => {
+      loadStats();
+      fetchAndRender();
+    }, 0);
   }
 
   // ── 过滤器 ─────────────────────────────────────────────────
-  const filterAll = document.getElementById('filter-all');
-  const filterUnread = document.getElementById('filter-unread');
-  let showUnreadOnly = false;
-
   filterAll.addEventListener('click', () => {
     showUnreadOnly = false;
     filterAll.classList.add('active');
     filterUnread.classList.remove('active');
-    loadMessages();
+    currentPage = 1;
+    fetchAndRender();
   });
 
   filterUnread.addEventListener('click', () => {
     showUnreadOnly = true;
     filterUnread.classList.add('active');
     filterAll.classList.remove('active');
-    loadMessages();
+    currentPage = 1;
+    fetchAndRender();
+  });
+
+  // ── 搜索 ───────────────────────────────────────────────────
+  let searchTimer;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(searchTimer);
+    searchTimer = setTimeout(() => {
+      searchKeyword = searchInput.value.trim().toLowerCase();
+      currentPage = 1;
+      renderMessages();
+    }, 300);
   });
 
   // ── 统计 ───────────────────────────────────────────────────
@@ -100,41 +126,78 @@
     } catch (e) { console.error(e); }
   }
 
-  // ── 消息列表 ───────────────────────────────────────────────
-  const messageList = document.getElementById('message-list');
-
-  async function loadMessages() {
+  // ── 拉取消息 ───────────────────────────────────────────────
+  async function fetchAndRender() {
     messageList.innerHTML = `<p class="loading">${I18n.t('admin.loading')}</p>`;
+    paginationEl.innerHTML = '';
     try {
-      const messages = await DB.adminGetAllMessages({ unreadOnly: showUnreadOnly });
-      if (!messages.length) {
-        messageList.innerHTML = `<p class="empty">${I18n.t('admin.no_messages')}</p>`;
-        return;
-      }
-
-      // 按 visitor 分组
-      const grouped = {};
-      for (const m of messages) {
-        if (!grouped[m.visitor_id]) {
-          grouped[m.visitor_id] = { messages: [], meta: m.visitors };
-        }
-        grouped[m.visitor_id].messages.push(m);
-      }
-
-      messageList.innerHTML = Object.entries(grouped)
-        .map(([vid, { messages, meta }]) => renderVisitorGroup(vid, messages, meta))
-        .join('');
-
-      bindActions();
+      allMessages = await DB.adminGetAllMessages({ unreadOnly: showUnreadOnly });
+      renderMessages();
     } catch (e) {
       messageList.innerHTML = `<p class="empty">加载失败：${e.message}</p>`;
     }
   }
 
+  // ── 渲染（搜索+分页在前端做）─────────────────────────────
+  function renderMessages() {
+    let filtered = allMessages;
+    if (searchKeyword) {
+      filtered = allMessages.filter(m =>
+        m.content?.toLowerCase().includes(searchKeyword) ||
+        m.contact?.toLowerCase().includes(searchKeyword) ||
+        m.visitors?.note?.toLowerCase().includes(searchKeyword)
+      );
+    }
+
+    if (!filtered.length) {
+      messageList.innerHTML = `<p class="empty">${searchKeyword ? '没有匹配的消息' : I18n.t('admin.no_messages')}</p>`;
+      paginationEl.innerHTML = '';
+      return;
+    }
+
+    const grouped = {};
+    for (const m of filtered) {
+      const vid = m.visitor_id ?? 'unknown';
+      if (!grouped[vid]) grouped[vid] = { messages: [], meta: m.visitors };
+      grouped[vid].messages.push(m);
+    }
+
+    const groupEntries = Object.entries(grouped);
+    const totalPages = Math.ceil(groupEntries.length / PAGE_SIZE);
+    currentPage = Math.min(currentPage, Math.max(1, totalPages));
+
+    const pageEntries = groupEntries.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+
+    messageList.innerHTML = pageEntries
+      .map(([vid, { messages, meta }]) => renderVisitorGroup(vid, messages, meta))
+      .join('');
+
+    renderPagination(totalPages);
+    bindActions();
+  }
+
+  // ── 分页 ───────────────────────────────────────────────────
+  function renderPagination(totalPages) {
+    if (totalPages <= 1) { paginationEl.innerHTML = ''; return; }
+    let html = '';
+    for (let i = 1; i <= totalPages; i++) {
+      html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
+    }
+    paginationEl.innerHTML = html;
+    paginationEl.querySelectorAll('.page-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        currentPage = parseInt(btn.dataset.page);
+        renderMessages();
+        messageList.scrollIntoView({ behavior: 'smooth' });
+      });
+    });
+  }
+
+  // ── 渲染访客分组 ───────────────────────────────────────────
   function renderVisitorGroup(vid, messages, meta) {
     const isBlocked = meta?.is_blocked ?? false;
     const note = meta?.note ?? '';
-    const shortId = vid.slice(0, 8);
+    const shortId = vid === 'unknown' ? 'unknown' : vid.slice(0, 8);
     const unreadCount = messages.filter(m => !m.is_read).length;
 
     return `
@@ -146,18 +209,18 @@
           ${unreadCount > 0 ? `<span class="badge unread">${I18n.t('admin.unread_badge')} ${unreadCount}</span>` : ''}
         </div>
         <div class="visitor-actions">
+          ${vid !== 'unknown' ? `
           <button class="btn-block" data-vid="${vid}" data-blocked="${isBlocked}">
             ${isBlocked ? I18n.t('admin.unblock_user') : I18n.t('admin.block_user')}
-          </button>
+          </button>` : ''}
         </div>
       </div>
-
+      ${vid !== 'unknown' ? `
       <div class="note-area">
         <input type="text" class="note-input" data-vid="${vid}" value="${escapeAttr(note)}"
           placeholder="${I18n.t('admin.note_placeholder')}">
         <button class="btn-note" data-vid="${vid}">${I18n.t('admin.save_note')}</button>
-      </div>
-
+      </div>` : ''}
       <div class="message-thread">
         ${messages.map(m => renderMessage(m)).join('')}
       </div>
@@ -181,6 +244,8 @@
     document.querySelectorAll('.btn-read').forEach(btn => {
       btn.addEventListener('click', async () => {
         await DB.adminMarkRead(btn.dataset.msgId);
+        const msg = allMessages.find(m => m.id === btn.dataset.msgId);
+        if (msg) msg.is_read = true;
         btn.closest('.message-item').classList.remove('unread');
         btn.remove();
         loadStats();
@@ -191,7 +256,7 @@
       btn.addEventListener('click', async () => {
         const isBlocked = btn.dataset.blocked === 'true';
         await DB.adminBlockVisitor(btn.dataset.vid, !isBlocked);
-        loadMessages();
+        await fetchAndRender();
         loadStats();
       });
     });
@@ -200,6 +265,9 @@
       btn.addEventListener('click', async () => {
         const note = btn.closest('.note-area').querySelector('.note-input').value;
         await DB.adminSaveNote(btn.dataset.vid, note);
+        allMessages.forEach(m => {
+          if (m.visitor_id === btn.dataset.vid && m.visitors) m.visitors.note = note;
+        });
         btn.textContent = '✓ 已保存';
         setTimeout(() => btn.textContent = I18n.t('admin.save_note'), 2000);
       });

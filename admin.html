@@ -156,12 +156,74 @@
       margin-top: 4px;
     }
 
+    /* 工具栏 */
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      flex: 1;
+      min-width: 180px;
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 0.85rem;
+      font-family: inherit;
+      outline: none;
+      background: var(--surface);
+    }
+
+    .search-input:focus { border-color: var(--accent); }
+
     /* 过滤器 */
     .filters {
       display: flex;
       gap: 8px;
-      margin-bottom: 16px;
     }
+
+    /* 分页 */
+    .pagination {
+      display: flex;
+      gap: 6px;
+      justify-content: center;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .page-btn {
+      padding: 5px 12px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--surface);
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--text-secondary);
+    }
+
+    .page-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* Footer */
+    footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 0.8rem;
+    }
+
+    footer a {
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    footer a:hover { text-decoration: underline; }
 
     .filter-btn {
       padding: 6px 16px;
@@ -382,10 +444,13 @@
         </div>
       </div>
 
-      <!-- 过滤器 -->
-      <div class="filters">
-        <button class="filter-btn active" id="filter-all" data-i18n="admin.all_messages">全部消息</button>
-        <button class="filter-btn" id="filter-unread" data-i18n="admin.unread_only">仅未读</button>
+      <!-- 工具栏：过滤器 + 搜索 -->
+      <div class="toolbar">
+        <div class="filters">
+          <button class="filter-btn active" id="filter-all" data-i18n="admin.all_messages">全部消息</button>
+          <button class="filter-btn" id="filter-unread" data-i18n="admin.unread_only">仅未读</button>
+        </div>
+        <input type="text" id="search-input" class="search-input" placeholder="搜索消息、联系方式、备注…">
       </div>
 
       <!-- 消息列表 -->
@@ -393,8 +458,15 @@
         <p class="loading" data-i18n="admin.loading">加载中……</p>
       </div>
 
+      <!-- 分页 -->
+      <div id="pagination" class="pagination"></div>
+
     </div>
   </div>
+
+  <footer>
+    <a href="https://github.com/MaoShiSanKe/Mssk_Talk" target="_blank" rel="noopener">Mssk_Talk on GitHub</a>
+  </footer>
 
   <script src="./js/config.js"></script>
   <script src="./js/i18n.js"></script>
