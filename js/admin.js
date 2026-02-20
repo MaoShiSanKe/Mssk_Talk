@@ -85,7 +85,11 @@
   function enterAdmin() {
     loginScreen.style.display = 'none';
     adminScreen.style.display = 'block';
-    setTimeout(() => { loadStats(); fetchAndRender(); }, 0);
+    setTimeout(() => {
+      loadStats();
+      fetchAndRender();
+      loadSettings();
+    }, 0);
   }
 
   // ── 过滤器 ─────────────────────────────────────────────────
@@ -124,6 +128,80 @@
       renderMessages();
     }, 300);
   });
+
+  // ── 设置面板 ───────────────────────────────────────────────
+  const SETTING_META = {
+    show_history:       { type: 'bool',   label: '显示历史记录',      desc: '用户端是否显示"查看历史记录"入口' },
+    allow_messages:     { type: 'bool',   label: '允许留言',          desc: '关闭后用户无法发送新消息' },
+    require_contact:    { type: 'bool',   label: '强制填写联系方式',  desc: '开启后联系方式变为必填项' },
+    max_message_length: { type: 'number', label: '最大字数',          desc: '单条消息最大字符数' },
+    daily_limit:        { type: 'number', label: '每日留言上限',      desc: '同一用户每日最多发送条数，0 为不限制' },
+  };
+
+  async function loadSettings() {
+    const settingsPanel = document.getElementById('settings-panel');
+    if (!settingsPanel) return;
+    settingsPanel.innerHTML = '<p class="loading">加载中…</p>';
+    try {
+      const rows = await DB.adminGetSettings();
+      settingsPanel.innerHTML = rows.map(row => renderSettingRow(row)).join('');
+      bindSettingActions();
+    } catch (e) {
+      settingsPanel.innerHTML = `<p class="empty">加载失败：${e.message}</p>`;
+    }
+  }
+
+  function renderSettingRow(row) {
+    const meta = SETTING_META[row.key] ?? { type: 'text', label: row.key, desc: row.description ?? '' };
+    const isBool = meta.type === 'bool';
+    const isTrue = row.value === 'true';
+
+    return `
+    <div class="setting-row" data-key="${row.key}">
+      <div class="setting-info">
+        <span class="setting-label">${meta.label}</span>
+        <span class="setting-desc">${meta.desc}</span>
+      </div>
+      <div class="setting-control">
+        ${isBool ? `
+          <button class="toggle-btn ${isTrue ? 'on' : 'off'}" data-key="${row.key}" data-value="${row.value}">
+            ${isTrue ? '开启' : '关闭'}
+          </button>
+        ` : `
+          <div class="number-control">
+            <input type="number" class="setting-number" data-key="${row.key}" value="${row.value}" min="0">
+            <button class="btn-save-num" data-key="${row.key}">保存</button>
+          </div>
+        `}
+      </div>
+    </div>`;
+  }
+
+  function bindSettingActions() {
+    document.querySelectorAll('.toggle-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const isOn = btn.dataset.value === 'true';
+        const newVal = isOn ? 'false' : 'true';
+        btn.disabled = true;
+        await DB.adminSaveSetting(btn.dataset.key, newVal);
+        btn.dataset.value = newVal;
+        btn.textContent = newVal === 'true' ? '开启' : '关闭';
+        btn.className = `toggle-btn ${newVal === 'true' ? 'on' : 'off'}`;
+        btn.disabled = false;
+      });
+    });
+
+    document.querySelectorAll('.btn-save-num').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const input = btn.closest('.number-control').querySelector('.setting-number');
+        const val = input.value;
+        btn.disabled = true;
+        await DB.adminSaveSetting(btn.dataset.key, val);
+        btn.textContent = '✓ 已保存';
+        setTimeout(() => { btn.textContent = '保存'; btn.disabled = false; }, 2000);
+      });
+    });
+  }
 
   // ── 统计 ───────────────────────────────────────────────────
   async function loadStats() {

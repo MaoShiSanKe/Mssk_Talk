@@ -168,6 +168,42 @@
       font-size: 0.85rem;
     }
 
+    /* 发送确认预览 */
+    .sent-preview {
+      margin: 8px 0;
+      padding: 10px 12px;
+      background: rgba(255,255,255,0.6);
+      border-radius: 6px;
+      border-left: 3px solid var(--success);
+    }
+
+    .sent-content {
+      font-size: 0.88rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .sent-img-link {
+      font-size: 0.8rem;
+      color: var(--success);
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    .send-another-btn {
+      margin-top: 10px;
+      background: none;
+      border: 1px solid currentColor;
+      color: inherit;
+      padding: 5px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-family: inherit;
+    }
+
     /* 历史记录 */
     .history-section {
       margin-top: 24px;
@@ -282,8 +318,8 @@
         <p class="tip" data-i18n="form.image_url_tip">请先将图片上传至图床，再粘贴链接</p>
       </div>
 
-      <div class="form-group">
-        <label data-i18n="form.contact_label">联系方式（可选）</label>
+      <div class="form-group" id="contact-group">
+        <label id="contact-label" data-i18n="form.contact_label">联系方式（可选）</label>
         <input
           type="text"
           id="contact"
@@ -300,7 +336,7 @@
 
     <div id="feedback" class="feedback hidden"></div>
 
-    <div class="history-section">
+    <div class="history-section" id="history-section">
       <button class="history-toggle" id="history-toggle" data-i18n="history.toggle_show">
         查看历史记录
       </button>

@@ -120,10 +120,19 @@ const DB = (() => {
     return _adminCall('saveNote', { visitorId, note });
   }
 
+  async function adminGetSettings() {
+    return _adminCall('getSettings');
+  }
+
+  async function adminSaveSetting(key, value) {
+    return _adminCall('saveSetting', { key, value });
+  }
+
   return {
     createVisitor, getVisitor, isBlocked,
     sendMessage, getMyMessages,
     adminGetAllMessages, adminGetStats,
     adminMarkRead, adminBlockVisitor, adminBlockMessage, adminSaveNote,
+    adminGetSettings, adminSaveSetting,
   };
 })();

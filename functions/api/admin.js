@@ -35,6 +35,21 @@ export async function onRequestPost(context) {
     let result;
 
     switch (action) {
+      case 'getSettings': {
+        const res = await fetch(`${supabaseUrl}/rest/v1/settings?select=key,value,description&order=key`, { headers });
+        result = await res.json();
+        break;
+      }
+
+      case 'saveSetting': {
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/settings?key=eq.${encodeURIComponent(payload.key)}`,
+          { method: 'PATCH', headers, body: JSON.stringify({ value: payload.value }) }
+        );
+        result = await res.json();
+        break;
+      }
+
       case 'getMessages': {
         // showBlocked=true 时显示所有消息，false 时隐藏已屏蔽消息
         const params = new URLSearchParams({
