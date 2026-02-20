@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理后台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f0f0f0;
+      --surface: #ffffff;
+      --border: #e0e0e0;
+      --text: #1a1a1a;
+      --text-secondary: #666;
+      --accent: #3a5a8a;
+      --accent-light: #e8f0fa;
+      --success: #2d6a4f;
+      --error: #8b2020;
+      --blocked-bg: #fff5f5;
+      --unread-bg: #f0f5ff;
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* 顶栏 */
+    .topbar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 24px;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .topbar h1 {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--accent);
+    }
+
+    .topbar button {
+      background: none;
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    /* 登录界面 */
+    #login-screen {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+
+    .login-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 40px 32px;
+      width: 100%;
+      max-width: 360px;
+      text-align: center;
+    }
+
+    .login-card h2 {
+      font-size: 1.3rem;
+      font-weight: 400;
+      margin-bottom: 24px;
+      color: var(--text);
+    }
+
+    .login-card input {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      outline: none;
+      margin-bottom: 12px;
+      font-family: inherit;
+    }
+
+    .login-card input:focus { border-color: var(--accent); }
+
+    .login-card button {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 0.95rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    #login-error {
+      color: var(--error);
+      font-size: 0.85rem;
+      margin-top: 10px;
+      display: none;
+    }
+
+    /* 主界面 */
+    #admin-screen { display: none; }
+
+    .main-content {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 24px 16px;
+    }
+
+    /* 统计栏 */
+    .stats {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .stat-card {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      text-align: center;
+    }
+
+    .stat-card .number {
+      font-size: 1.8rem;
+      font-weight: 500;
+      color: var(--accent);
+    }
+
+    .stat-card .label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    /* 过滤器 */
+    .filters {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .filter-btn {
+      padding: 6px 16px;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      background: var(--surface);
+      font-size: 0.85rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-family: inherit;
+    }
+
+    .filter-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    /* 访客分组 */
+    .visitor-group {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      margin-bottom: 16px;
+      overflow: hidden;
+    }
+
+    .visitor-group.blocked {
+      background: var(--blocked-bg);
+      border-color: #f0c0c0;
+    }
+
+    .visitor-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+      background: #fafafa;
+    }
+
+    .visitor-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .visitor-id {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      font-family: monospace;
+    }
+
+    .badge {
+      font-size: 0.7rem;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+    .badge.blocked { background: #fddede; color: var(--error); }
+    .badge.unread { background: var(--unread-bg); color: var(--accent); }
+
+    .visitor-actions button {
+      font-size: 0.8rem;
+      padding: 4px 12px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      background: var(--surface);
+      font-family: inherit;
+      color: var(--text-secondary);
+    }
+
+    /* 备注区 */
+    .note-area {
+      display: flex;
+      gap: 8px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: #fdfdf8;
+    }
+
+    .note-input {
+      flex: 1;
+      padding: 6px 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.82rem;
+      font-family: inherit;
+      outline: none;
+      background: var(--surface);
+    }
+
+    .btn-note {
+      padding: 6px 12px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--surface);
+      font-size: 0.8rem;
+      cursor: pointer;
+      font-family: inherit;
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    /* 消息条目 */
+    .message-thread { padding: 0 16px; }
+
+    .message-item {
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .message-item:last-child { border-bottom: none; }
+    .message-item.unread { background: none; }
+    .message-item.unread .msg-content::before {
+      content: '● ';
+      color: var(--accent);
+      font-size: 0.6rem;
+      vertical-align: middle;
+    }
+
+    .msg-content {
+      font-size: 0.9rem;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      color: var(--text);
+    }
+
+    .msg-contact {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 6px;
+    }
+
+    .msg-img-link {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .msg-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 8px;
+    }
+
+    .msg-time {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+
+    .btn-read {
+      font-size: 0.78rem;
+      padding: 3px 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--accent-light);
+      color: var(--accent);
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .loading, .empty {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      padding: 20px;
+      text-align: center;
+    }
+
+    @media (max-width: 500px) {
+      .stats { flex-direction: column; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 登录界面 -->
+  <div id="login-screen">
+    <div class="login-card">
+      <h2 data-i18n="admin.login_title">管理后台</h2>
+      <input
+        type="password"
+        id="password-input"
+        data-i18n-attr="placeholder"
+        data-i18n="admin.password_placeholder"
+        placeholder="请输入密码"
+      >
+      <button id="login-btn" data-i18n="admin.login_btn">登录</button>
+      <p id="login-error"></p>
+    </div>
+  </div>
+
+  <!-- 主界面 -->
+  <div id="admin-screen">
+    <div class="topbar">
+      <h1 data-i18n="admin.login_title">管理后台</h1>
+      <button id="logout-btn" data-i18n="admin.logout">退出</button>
+    </div>
+
+    <div class="main-content">
+
+      <!-- 统计 -->
+      <div class="stats">
+        <div class="stat-card">
+          <div class="number" id="stat-total">—</div>
+          <div class="label" data-i18n="admin.stats_total">总消息</div>
+        </div>
+        <div class="stat-card">
+          <div class="number" id="stat-unread">—</div>
+          <div class="label" data-i18n="admin.stats_unread">未读</div>
+        </div>
+        <div class="stat-card">
+          <div class="number" id="stat-visitors">—</div>
+          <div class="label" data-i18n="admin.stats_visitors">用户数</div>
+        </div>
+      </div>
+
+      <!-- 过滤器 -->
+      <div class="filters">
+        <button class="filter-btn active" id="filter-all" data-i18n="admin.all_messages">全部消息</button>
+        <button class="filter-btn" id="filter-unread" data-i18n="admin.unread_only">仅未读</button>
+      </div>
+
+      <!-- 消息列表 -->
+      <div id="message-list">
+        <p class="loading" data-i18n="admin.loading">加载中……</p>
+      </div>
+
+    </div>
+  </div>
+
+  <script src="./js/config.js"></script>
+  <script src="./js/i18n.js"></script>
+  <script src="./js/supabase.js"></script>
+  <script src="./js/admin.js"></script>
+</body>
+</html>

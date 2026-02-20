@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>留言给我</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;500&family=Noto+Sans+SC:wght@300;400&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f7f5f0;
+      --surface: #ffffff;
+      --border: #e0dbd0;
+      --text: #2a2420;
+      --text-secondary: #8a8078;
+      --accent: #5c4a3a;
+      --accent-light: #f0ebe0;
+      --success: #3d6b4f;
+      --success-bg: #edf5f0;
+      --error: #8b3a3a;
+      --error-bg: #fdf0f0;
+      --unread: #e8e0f0;
+      --radius: 8px;
+      --shadow: 0 2px 12px rgba(60,40,20,0.08);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 16px 80px;
+    }
+
+    /* 顶部 */
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    header h1 {
+      font-family: 'Noto Serif SC', serif;
+      font-weight: 300;
+      font-size: 2rem;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
+
+    header p {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+    }
+
+    /* 卡片容器 */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 32px;
+      width: 100%;
+      max-width: 560px;
+    }
+
+    /* 表单 */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      letter-spacing: 0.03em;
+    }
+
+    textarea, input[type="text"], input[type="url"] {
+      width: 100%;
+      font-family: 'Noto Sans SC', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 12px 14px;
+      outline: none;
+      transition: border-color 0.2s;
+      resize: vertical;
+    }
+
+    textarea { min-height: 140px; }
+
+    textarea:focus, input:focus {
+      border-color: var(--accent);
+      background: var(--surface);
+    }
+
+    .char-count {
+      text-align: right;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+    .char-count.over { color: var(--error); }
+
+    .tip {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 5px;
+    }
+
+    /* 提交按钮 */
+    .submit-btn {
+      width: 100%;
+      padding: 13px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: var(--radius);
+      font-family: 'Noto Sans SC', sans-serif;
+      font-size: 0.95rem;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      margin-top: 4px;
+    }
+
+    .submit-btn:hover { opacity: 0.88; }
+    .submit-btn:active { transform: scale(0.99); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* 反馈 */
+    .feedback {
+      margin-top: 16px;
+      padding: 14px 16px;
+      border-radius: var(--radius);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+    .feedback.hidden { display: none; }
+    .feedback.success {
+      background: var(--success-bg);
+      border: 1px solid #b8d8c4;
+      color: var(--success);
+    }
+    .feedback.error {
+      background: var(--error-bg);
+      border: 1px solid #e8c0c0;
+      color: var(--error);
+    }
+    .feedback strong { display: block; margin-bottom: 4px; }
+    .feedback button {
+      margin-top: 10px;
+      background: none;
+      border: 1px solid currentColor;
+      color: inherit;
+      padding: 5px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.85rem;
+    }
+
+    /* 历史记录 */
+    .history-section {
+      margin-top: 24px;
+      border-top: 1px solid var(--border);
+      padding-top: 20px;
+    }
+
+    .history-toggle {
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      cursor: pointer;
+      padding: 0;
+      text-decoration: underline;
+      text-underline-offset: 3px;
+    }
+
+    #history-list {
+      display: none;
+      margin-top: 16px;
+    }
+
+    .history-item {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .history-item:last-child { border-bottom: none; }
+
+    .history-content {
+      font-size: 0.9rem;
+      line-height: 1.6;
+      white-space: pre-wrap;
+    }
+
+    .history-time {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      display: block;
+      margin-top: 6px;
+    }
+
+    .history-img-link {
+      font-size: 0.8rem;
+      color: var(--accent);
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    .loading, .empty {
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      padding: 8px 0;
+    }
+
+    /* 装饰线 */
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+    .divider::before, .divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+    .divider span {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      letter-spacing: 0.08em;
+    }
+
+    @media (max-width: 600px) {
+      header h1 { font-size: 1.6rem; }
+      .card { padding: 24px 20px; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1 data-i18n="site.title">留言给我</h1>
+    <p data-i18n="site.description">你的消息会以匿名方式送达，联系方式完全可选。</p>
+  </header>
+
+  <div class="card">
+    <form id="message-form">
+      <div class="form-group">
+        <textarea
+          id="message-content"
+          data-i18n-attr="placeholder"
+          data-i18n="form.message_placeholder"
+          placeholder="写下你想说的话……"
+        ></textarea>
+        <div class="char-count"><span id="char-count">0 / 2000</span></div>
+      </div>
+
+      <div class="divider"><span>可选信息</span></div>
+
+      <div class="form-group">
+        <label data-i18n="form.image_url_label">图片链接（可选）</label>
+        <input
+          type="url"
+          id="image-url"
+          data-i18n-attr="placeholder"
+          data-i18n="form.image_url_placeholder"
+          placeholder="https://your-image-host.com/image.jpg"
+        >
+        <p class="tip" data-i18n="form.image_url_tip">请先将图片上传至图床，再粘贴链接</p>
+      </div>
+
+      <div class="form-group">
+        <label data-i18n="form.contact_label">联系方式（可选）</label>
+        <input
+          type="text"
+          id="contact"
+          data-i18n-attr="placeholder"
+          data-i18n="form.contact_placeholder"
+          placeholder="邮箱、Twitter、微博……随你填"
+        >
+      </div>
+
+      <button type="submit" class="submit-btn" id="submit-btn" data-i18n="form.submit">
+        发送消息
+      </button>
+    </form>
+
+    <div id="feedback" class="feedback hidden"></div>
+
+    <div class="history-section">
+      <button class="history-toggle" id="history-toggle" data-i18n="history.toggle_show">
+        查看历史记录
+      </button>
+      <div id="history-list"></div>
+    </div>
+  </div>
+
+  <script src="./js/config.js"></script>
+  <script src="./js/i18n.js"></script>
+  <script src="./js/supabase.js"></script>
+  <script src="./js/visitor.js"></script>
+  <script src="./js/main.js"></script>
+</body>
+</html>

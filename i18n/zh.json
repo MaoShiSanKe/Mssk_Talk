@@ -1,0 +1,57 @@
+{
+  "site": {
+    "title": "留言给我",
+    "subtitle": "有什么想说的，写下来吧",
+    "description": "你的消息会以匿名方式送达，联系方式完全可选。"
+  },
+  "form": {
+    "message_placeholder": "写下你想说的话……",
+    "image_url_label": "图片链接（可选）",
+    "image_url_placeholder": "https://your-image-host.com/image.jpg",
+    "image_url_tip": "请先将图片上传至图床，再粘贴链接",
+    "contact_label": "联系方式（可选）",
+    "contact_placeholder": "邮箱、Twitter、微博……随你填",
+    "submit": "发送消息",
+    "submitting": "发送中……"
+  },
+  "feedback": {
+    "success_title": "已送达",
+    "success_body": "感谢你的留言，我会定期查看。",
+    "error_title": "发送失败",
+    "error_body": "请稍后再试。",
+    "blocked": "无法发送消息。",
+    "message_required": "请写点什么再发送。",
+    "send_another": "再发一条"
+  },
+  "history": {
+    "title": "你的留言记录",
+    "empty": "还没有留言记录。",
+    "toggle_show": "查看历史记录",
+    "toggle_hide": "收起历史记录"
+  },
+  "admin": {
+    "login_title": "管理后台",
+    "password_placeholder": "请输入密码",
+    "login_btn": "登录",
+    "login_error": "密码错误",
+    "logout": "退出",
+    "all_messages": "全部消息",
+    "unread_only": "仅未读",
+    "mark_read": "标为已读",
+    "block_user": "屏蔽用户",
+    "unblock_user": "解除屏蔽",
+    "add_note": "添加备注",
+    "note_placeholder": "备注这个用户……",
+    "save_note": "保存",
+    "no_messages": "暂无消息",
+    "visitor_id": "用户",
+    "contact": "联系方式",
+    "image": "图片",
+    "blocked_badge": "已屏蔽",
+    "unread_badge": "未读",
+    "loading": "加载中……",
+    "stats_total": "总消息",
+    "stats_unread": "未读",
+    "stats_visitors": "用户数"
+  }
+}
