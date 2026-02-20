@@ -96,8 +96,8 @@ const DB = (() => {
     return data.data;
   }
 
-  async function adminGetAllMessages({ unreadOnly = false } = {}) {
-    return _adminCall('getMessages', { unreadOnly });
+  async function adminGetAllMessages({ unreadOnly = false, showBlocked = false } = {}) {
+    return _adminCall('getMessages', { unreadOnly, showBlocked });
   }
 
   async function adminGetStats() {
@@ -108,8 +108,12 @@ const DB = (() => {
     return _adminCall('markRead', { messageId });
   }
 
-  async function adminBlockVisitor(visitorId, block = true) {
-    return _adminCall('blockVisitor', { visitorId, block });
+  async function adminBlockVisitor(visitorId, block = true, blockMessages = false) {
+    return _adminCall('blockVisitor', { visitorId, block, blockMessages });
+  }
+
+  async function adminBlockMessage(messageId, block = true) {
+    return _adminCall('blockMessage', { messageId, block });
   }
 
   async function adminSaveNote(visitorId, note) {
@@ -120,6 +124,6 @@ const DB = (() => {
     createVisitor, getVisitor, isBlocked,
     sendMessage, getMyMessages,
     adminGetAllMessages, adminGetStats,
-    adminMarkRead, adminBlockVisitor, adminSaveNote,
+    adminMarkRead, adminBlockVisitor, adminBlockMessage, adminSaveNote,
   };
 })();

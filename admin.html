@@ -373,6 +373,11 @@
       margin-top: 8px;
     }
 
+    .msg-actions {
+      display: flex;
+      gap: 6px;
+    }
+
     .msg-time {
       font-size: 0.75rem;
       color: var(--text-secondary);
@@ -387,6 +392,100 @@
       color: var(--accent);
       cursor: pointer;
       font-family: inherit;
+    }
+
+    .btn-block-msg {
+      font-size: 0.78rem;
+      padding: 3px 10px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      background: var(--surface);
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .btn-block-msg.unblock {
+      color: var(--success);
+      border-color: #b8d8c4;
+    }
+
+    .msg-blocked {
+      opacity: 0.5;
+    }
+
+    .blocked-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 2px 7px;
+      border-radius: 10px;
+      background: #fddede;
+      color: var(--error);
+      margin-bottom: 6px;
+    }
+
+    /* 确认弹窗 */
+    .confirm-dialog {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .confirm-box {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 28px 24px;
+      width: 100%;
+      max-width: 340px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.15);
+    }
+
+    .confirm-title {
+      font-size: 1rem;
+      font-weight: 500;
+      margin-bottom: 8px;
+    }
+
+    .confirm-desc {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .confirm-check {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+
+    .confirm-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
+
+    .confirm-actions button {
+      padding: 7px 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-family: inherit;
+      background: var(--surface);
+      color: var(--text-secondary);
+    }
+
+    .confirm-actions button.danger {
+      background: var(--error);
+      color: #fff;
+      border-color: var(--error);
     }
 
     .loading, .empty {
@@ -449,6 +548,7 @@
         <div class="filters">
           <button class="filter-btn active" id="filter-all" data-i18n="admin.all_messages">全部消息</button>
           <button class="filter-btn" id="filter-unread" data-i18n="admin.unread_only">仅未读</button>
+          <button class="filter-btn" id="filter-blocked">显示已屏蔽</button>
         </div>
         <input type="text" id="search-input" class="search-input" placeholder="搜索消息、联系方式、备注…">
       </div>

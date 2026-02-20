@@ -25,6 +25,7 @@
 
   // ── 状态 ───────────────────────────────────────────────────
   let showUnreadOnly = false;
+  let showBlocked = false;
   let searchKeyword = '';
   let currentPage = 1;
   const PAGE_SIZE = 10;
@@ -105,6 +106,15 @@
     fetchAndRender();
   });
 
+  document.getElementById('filter-blocked').addEventListener('click', () => {
+    showBlocked = !showBlocked;
+    const btn = document.getElementById('filter-blocked');
+    btn.classList.toggle('active', showBlocked);
+    btn.textContent = showBlocked ? '隐藏已屏蔽' : '显示已屏蔽';
+    currentPage = 1;
+    fetchAndRender();
+  });
+
   // ── 搜索 ───────────────────────────────────────────────────
   let searchTimer;
   searchInput.addEventListener('input', () => {
@@ -131,7 +141,7 @@
     messageList.innerHTML = `<p class="loading">${I18n.t('admin.loading')}</p>`;
     paginationEl.innerHTML = '';
     try {
-      allMessages = await DB.adminGetAllMessages({ unreadOnly: showUnreadOnly });
+      allMessages = await DB.adminGetAllMessages({ unreadOnly: showUnreadOnly, showBlocked });
       renderMessages();
     } catch (e) {
       messageList.innerHTML = `<p class="empty">加载失败：${e.message}</p>`;
@@ -229,13 +239,19 @@
 
   function renderMessage(m) {
     return `
-    <div class="message-item ${m.is_read ? '' : 'unread'}" data-msg-id="${m.id}">
+    <div class="message-item ${m.is_read ? '' : 'unread'} ${m.is_blocked ? 'msg-blocked' : ''}" data-msg-id="${m.id}">
+      ${m.is_blocked ? '<span class="blocked-badge">已屏蔽</span>' : ''}
       <p class="msg-content">${escapeHtml(m.content)}</p>
       ${m.image_url ? `<a href="${escapeHtml(m.image_url)}" target="_blank" class="msg-img-link">🖼 查看图片</a>` : ''}
       ${m.contact ? `<p class="msg-contact">📬 ${I18n.t('admin.contact')}：${escapeHtml(m.contact)}</p>` : ''}
       <div class="msg-footer">
         <span class="msg-time">${formatTime(m.created_at)}</span>
-        ${!m.is_read ? `<button class="btn-read" data-msg-id="${m.id}">${I18n.t('admin.mark_read')}</button>` : ''}
+        <div class="msg-actions">
+          ${!m.is_read ? `<button class="btn-read" data-msg-id="${m.id}">${I18n.t('admin.mark_read')}</button>` : ''}
+          <button class="btn-block-msg ${m.is_blocked ? 'unblock' : ''}" data-msg-id="${m.id}" data-blocked="${m.is_blocked}">
+            ${m.is_blocked ? '解除屏蔽' : '屏蔽消息'}
+          </button>
+        </div>
       </div>
     </div>`;
   }
@@ -253,10 +269,33 @@
     });
 
     document.querySelectorAll('.btn-block').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const isBlocked = btn.dataset.blocked === 'true';
+        if (!isBlocked) {
+          // 屏蔽用户时弹出确认
+          showBlockConfirm(btn.dataset.vid);
+        } else {
+          // 解除屏蔽直接执行
+          DB.adminBlockVisitor(btn.dataset.vid, false, false).then(() => {
+            fetchAndRender();
+            loadStats();
+          });
+        }
+      });
+    });
+
+    document.querySelectorAll('.btn-block-msg').forEach(btn => {
       btn.addEventListener('click', async () => {
         const isBlocked = btn.dataset.blocked === 'true';
-        await DB.adminBlockVisitor(btn.dataset.vid, !isBlocked);
-        await fetchAndRender();
+        await DB.adminBlockMessage(btn.dataset.msgId, !isBlocked);
+        const msg = allMessages.find(m => m.id === btn.dataset.msgId);
+        if (msg) msg.is_blocked = !isBlocked;
+        // 如果当前不显示已屏蔽，屏蔽后从列表移除
+        if (!showBlocked && !isBlocked) {
+          btn.closest('.message-item').remove();
+        } else {
+          renderMessages();
+        }
         loadStats();
       });
     });
@@ -272,6 +311,42 @@
         setTimeout(() => btn.textContent = I18n.t('admin.save_note'), 2000);
       });
     });
+  }
+
+  // ── 屏蔽用户确认弹窗 ──────────────────────────────────────
+  function showBlockConfirm(visitorId) {
+    const existing = document.getElementById('block-confirm');
+    if (existing) existing.remove();
+
+    const dialog = document.createElement('div');
+    dialog.id = 'block-confirm';
+    dialog.className = 'confirm-dialog';
+    dialog.innerHTML = `
+      <div class="confirm-box">
+        <p class="confirm-title">屏蔽此用户</p>
+        <p class="confirm-desc">屏蔽后该用户无法再发送消息。</p>
+        <label class="confirm-check">
+          <input type="checkbox" id="block-msgs-check"> 同时屏蔽该用户所有历史消息
+        </label>
+        <div class="confirm-actions">
+          <button id="confirm-cancel">取消</button>
+          <button id="confirm-ok" class="danger">确认屏蔽</button>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(dialog);
+
+    document.getElementById('confirm-cancel').addEventListener('click', () => dialog.remove());
+    document.getElementById('confirm-ok').addEventListener('click', async () => {
+      const blockMessages = document.getElementById('block-msgs-check').checked;
+      dialog.remove();
+      await DB.adminBlockVisitor(visitorId, true, blockMessages);
+      await fetchAndRender();
+      loadStats();
+    });
+
+    // 点击遮罩关闭
+    dialog.addEventListener('click', e => { if (e.target === dialog) dialog.remove(); });
   }
 
   function escapeHtml(str = '') {

@@ -36,10 +36,12 @@ export async function onRequestPost(context) {
 
     switch (action) {
       case 'getMessages': {
+        // showBlocked=true 时显示所有消息，false 时隐藏已屏蔽消息
         const params = new URLSearchParams({
           select: '*, visitors(is_blocked, note)',
           order: 'created_at.desc',
           ...(payload?.unreadOnly ? { is_read: 'eq.false' } : {}),
+          ...(payload?.showBlocked ? {} : { is_blocked: 'eq.false' }),
         });
         const res = await fetch(`${supabaseUrl}/rest/v1/messages?${params}`, { headers });
         result = await res.json();
@@ -48,13 +50,14 @@ export async function onRequestPost(context) {
 
       case 'getStats': {
         const [msgs, visitors] = await Promise.all([
-          fetch(`${supabaseUrl}/rest/v1/messages?select=id,is_read`, { headers }).then(r => r.json()),
+          fetch(`${supabaseUrl}/rest/v1/messages?select=id,is_read,is_blocked`, { headers }).then(r => r.json()),
           fetch(`${supabaseUrl}/rest/v1/visitors?select=id`, { headers }).then(r => r.json()),
         ]);
         result = {
-          total: msgs.length,
-          unread: msgs.filter(m => !m.is_read).length,
+          total: msgs.filter(m => !m.is_blocked).length,
+          unread: msgs.filter(m => !m.is_read && !m.is_blocked).length,
           visitors: visitors.length,
+          blocked_messages: msgs.filter(m => m.is_blocked).length,
         };
         break;
       }
@@ -69,8 +72,26 @@ export async function onRequestPost(context) {
       }
 
       case 'blockVisitor': {
+        // 屏蔽/解除屏蔽用户
         const res = await fetch(
           `${supabaseUrl}/rest/v1/visitors?id=eq.${payload.visitorId}`,
+          { method: 'PATCH', headers, body: JSON.stringify({ is_blocked: payload.block }) }
+        );
+        result = await res.json();
+        // 如果选择同时屏蔽该用户所有消息
+        if (payload.blockMessages) {
+          await fetch(
+            `${supabaseUrl}/rest/v1/messages?visitor_id=eq.${payload.visitorId}`,
+            { method: 'PATCH', headers, body: JSON.stringify({ is_blocked: payload.block }) }
+          );
+        }
+        break;
+      }
+
+      case 'blockMessage': {
+        // 单独屏蔽/解除屏蔽某条消息
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/messages?id=eq.${payload.messageId}`,
           { method: 'PATCH', headers, body: JSON.stringify({ is_blocked: payload.block }) }
         );
         result = await res.json();
