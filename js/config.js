@@ -9,19 +9,23 @@ const CONFIG = {
     publishableKey: '',
   },
 
-  // 管理员密码不在前端存储，验证通过 /api/auth 进行
-  // secret key 不在前端，由 /api/admin 代理使用
-
   defaultLang: 'zh',
+
+  // settings 默认值，init() 后会被服务端覆盖
+  settings: {
+    showHistory: false,
+    allowMessages: true,
+    requireContact: false,
+    maxMessageLength: 2000,
+    dailyLimit: 0,
+  },
 
   storage: {
     visitorId: 'mssk_visitor_id',
     lang: 'mssk_lang',
-    // 管理员 session：只存是否已验证，不存密码
     adminAuthed: 'mssk_admin_authed',
   },
 
-  // 初始化：从服务端拉取配置
   async init() {
     const res = await fetch('/api/config');
     if (!res.ok) throw new Error('无法加载配置');
@@ -29,5 +33,6 @@ const CONFIG = {
     this.supabase.url = remote.supabaseUrl;
     this.supabase.publishableKey = remote.supabasePublishableKey;
     this.defaultLang = remote.defaultLang ?? 'zh';
+    if (remote.settings) this.settings = { ...this.settings, ...remote.settings };
   },
 };
