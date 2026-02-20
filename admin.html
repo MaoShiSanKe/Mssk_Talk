@@ -166,6 +166,17 @@
       margin-bottom: 10px;
     }
 
+    .section-toggle {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+      padding: 4px 0;
+    }
+
+    .section-toggle:hover { color: var(--accent); }
+
     /* 设置面板 */
     .settings-panel {
       background: var(--surface);
@@ -311,6 +322,23 @@
       background: var(--accent);
       color: #fff;
       border-color: var(--accent);
+    }
+
+    .page-btn.page-arrow {
+      font-size: 1rem;
+      padding: 5px 10px;
+    }
+
+    .page-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .page-dots {
+      padding: 5px 4px;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      line-height: 1;
     }
 
     /* Footer */
@@ -701,8 +729,11 @@
       </div>
 
       <!-- 设置面板 -->
-      <div class="section-title">系统设置</div>
-      <div id="settings-panel" class="settings-panel">
+      <div class="section-title section-toggle" id="settings-toggle">
+        <span>系统设置</span>
+        <span class="toggle-arrow" id="settings-arrow">▸</span>
+      </div>
+      <div id="settings-panel" class="settings-panel" style="display:none">
         <p class="loading">加载中…</p>
       </div>
 

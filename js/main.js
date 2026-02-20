@@ -53,9 +53,9 @@
     contactLabel.textContent = '联系方式（必填）';
   }
 
-  // 历史记录开关
-  if (!S.showHistory) {
-    historySection.style.display = 'none';
+  // 历史记录开关：开启时才显示，默认隐藏在HTML里
+  if (S.showHistory) {
+    historySection.style.display = 'block';
   }
 
   // 字数限制

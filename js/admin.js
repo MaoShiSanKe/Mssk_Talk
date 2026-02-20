@@ -85,11 +85,7 @@
   function enterAdmin() {
     loginScreen.style.display = 'none';
     adminScreen.style.display = 'block';
-    setTimeout(() => {
-      loadStats();
-      fetchAndRender();
-      loadSettings();
-    }, 0);
+    setTimeout(() => { loadStats(); fetchAndRender(); }, 0);
   }
 
   // ── 过滤器 ─────────────────────────────────────────────────
@@ -127,6 +123,20 @@
       currentPage = 1;
       renderMessages();
     }, 300);
+  });
+
+  // ── 设置面板折叠 ───────────────────────────────────────────
+  let settingsLoaded = false;
+  document.getElementById('settings-toggle').addEventListener('click', () => {
+    const panel = document.getElementById('settings-panel');
+    const arrow = document.getElementById('settings-arrow');
+    const isHidden = panel.style.display === 'none';
+    panel.style.display = isHidden ? 'block' : 'none';
+    arrow.textContent = isHidden ? '▾' : '▸';
+    if (isHidden && !settingsLoaded) {
+      settingsLoaded = true;
+      loadSettings();
+    }
   });
 
   // ── 设置面板 ───────────────────────────────────────────────
@@ -266,18 +276,69 @@
   // ── 用户分组外层分页 ───────────────────────────────────────
   function renderPagination(totalPages) {
     if (totalPages <= 1) { paginationEl.innerHTML = ''; return; }
-    let html = '';
-    for (let i = 1; i <= totalPages; i++) {
-      html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" data-page="${i}">${i}</button>`;
-    }
-    paginationEl.innerHTML = html;
-    paginationEl.querySelectorAll('.page-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        currentPage = parseInt(btn.dataset.page);
-        renderMessages();
-        messageList.scrollIntoView({ behavior: 'smooth' });
-      });
+    paginationEl.innerHTML = buildPageButtons(totalPages, currentPage, (page) => {
+      currentPage = page;
+      renderMessages();
+      messageList.scrollIntoView({ behavior: 'smooth' });
     });
+  }
+
+  // 通用分页按钮生成（< 1 2 ... 5 6 7 ... 99 > 样式）
+  function buildPageButtons(totalPages, cur, onClick) {
+    const pages = [];
+
+    // 计算要显示的页码
+    const showPages = new Set();
+    showPages.add(1);
+    showPages.add(totalPages);
+    for (let i = Math.max(1, cur - 1); i <= Math.min(totalPages, cur + 1); i++) showPages.add(i);
+
+    const sorted = [...showPages].sort((a, b) => a - b);
+
+    // 插入省略号
+    const items = [];
+    let prev = 0;
+    for (const p of sorted) {
+      if (p - prev > 1) items.push('...');
+      items.push(p);
+      prev = p;
+    }
+
+    const container = document.createElement('div');
+    container.className = 'pagination';
+
+    // 上一页
+    const prevBtn = document.createElement('button');
+    prevBtn.className = 'page-btn page-arrow';
+    prevBtn.textContent = '‹';
+    prevBtn.disabled = cur === 1;
+    prevBtn.addEventListener('click', () => onClick(cur - 1));
+    container.appendChild(prevBtn);
+
+    for (const item of items) {
+      if (item === '...') {
+        const dots = document.createElement('span');
+        dots.className = 'page-dots';
+        dots.textContent = '…';
+        container.appendChild(dots);
+      } else {
+        const btn = document.createElement('button');
+        btn.className = `page-btn${item === cur ? ' active' : ''}`;
+        btn.textContent = item;
+        btn.addEventListener('click', () => onClick(item));
+        container.appendChild(btn);
+      }
+    }
+
+    // 下一页
+    const nextBtn = document.createElement('button');
+    nextBtn.className = 'page-btn page-arrow';
+    nextBtn.textContent = '›';
+    nextBtn.disabled = cur === totalPages;
+    nextBtn.addEventListener('click', () => onClick(cur + 1));
+    container.appendChild(nextBtn);
+
+    return container.outerHTML;
   }
 
   // ── 渲染单个用户分组（折叠/展开 + 组内分页）──────────────
@@ -342,13 +403,7 @@
           ${pageMsgs.map(m => renderMessage(m)).join('')}
         </div>
 
-        ${totalMsgPages > 1 ? `
-        <div class="msg-pagination">
-          ${Array.from({length: totalMsgPages}, (_, i) => i + 1).map(i => `
-            <button class="page-btn ${i === state.page ? 'active' : ''} msg-page-btn"
-              data-vid="${vid}" data-page="${i}">${i}</button>
-          `).join('')}
-        </div>` : ''}
+        ${totalMsgPages > 1 ? `<div class="msg-pagination" data-vid="${vid}" data-cur="${state.page}" data-total="${totalMsgPages}"></div>` : ''}
       </div>` : ''}
 
     </div>`;
@@ -375,22 +430,22 @@
 
   // ── 事件绑定 ───────────────────────────────────────────────
   function bindActions() {
+    // 填充组内分页
+    document.querySelectorAll('.msg-pagination').forEach(el => {
+      const vid = el.dataset.vid;
+      const cur = parseInt(el.dataset.cur);
+      const total = parseInt(el.dataset.total);
+      el.innerHTML = buildPageButtons(total, cur, (page) => {
+        groupState[vid].page = page;
+        renderMessages();
+      });
+    });
     // 折叠/展开
     document.querySelectorAll('.group-toggle, .group-preview').forEach(el => {
       el.addEventListener('click', () => {
         const vid = el.dataset.vid;
         if (!groupState[vid]) groupState[vid] = { open: false, page: 1 };
         groupState[vid].open = !groupState[vid].open;
-        renderMessages();
-      });
-    });
-
-    // 组内消息翻页
-    document.querySelectorAll('.msg-page-btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        e.stopPropagation();
-        const vid = btn.dataset.vid;
-        groupState[vid].page = parseInt(btn.dataset.page);
         renderMessages();
       });
     });
