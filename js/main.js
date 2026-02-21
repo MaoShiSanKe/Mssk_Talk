@@ -36,6 +36,11 @@
   const historyToggle = document.getElementById('history-toggle');
   const historyList = document.getElementById('history-list');
   const charCount = document.getElementById('char-count');
+  const honeypotInput = document.getElementById('_hp'); // 隐藏的防机器人字段
+
+  // ── 提交间隔限制 ───────────────────────────────────────────
+  let lastSubmitTime = 0;
+  const MIN_INTERVAL = 2000;
 
   // ── 应用设置 ───────────────────────────────────────────────
 
@@ -69,21 +74,6 @@
     charCount.classList.toggle('over', len > MAX_CHARS);
   });
 
-  // ── 每日限制检查 ───────────────────────────────────────────
-  function checkDailyLimit() {
-    if (!S.dailyLimit) return false; // 0 = 不限制
-    const key = `mssk_daily_${visitorId}_${new Date().toDateString()}`;
-    const count = parseInt(localStorage.getItem(key) ?? '0');
-    return count >= S.dailyLimit;
-  }
-
-  function incrementDailyCount() {
-    if (!S.dailyLimit) return;
-    const key = `mssk_daily_${visitorId}_${new Date().toDateString()}`;
-    const count = parseInt(localStorage.getItem(key) ?? '0');
-    localStorage.setItem(key, count + 1);
-  }
-
   // ── 提交表单 ───────────────────────────────────────────────
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -102,18 +92,12 @@
       return;
     }
 
-    if (checkDailyLimit()) {
-      showFeedback('error', `今日留言已达上限（${S.dailyLimit} 条），请明天再试。`);
+    // 前端提交间隔限制
+    const now = Date.now();
+    if (now - lastSubmitTime < MIN_INTERVAL) {
+      showFeedback('error', '提交太频繁，请稍等片刻');
       return;
     }
-
-    try {
-      const blocked = await DB.isBlocked(visitorId);
-      if (blocked) {
-        showFeedback('error', I18n.t('feedback.blocked'));
-        return;
-      }
-    } catch { /* 网络问题则继续 */ }
 
     submitBtn.disabled = true;
     submitBtn.textContent = I18n.t('form.submitting');
@@ -126,15 +110,16 @@
         content: sentContent,
         imageUrl: sentImageUrl,
         contact: contactInput.value.trim(),
+        honeypot: honeypotInput?.value ?? '',
       });
-      incrementDailyCount();
+      lastSubmitTime = Date.now();
       showSentConfirm(sentContent, sentImageUrl);
       form.reset();
       charCount.textContent = `0 / ${MAX_CHARS}`;
       if (S.showHistory && historyList.style.display !== 'none') loadHistory();
     } catch (err) {
       console.error(err);
-      showFeedback('error', I18n.t('feedback.error_body'));
+      showFeedback('error', err.message || I18n.t('feedback.error_body'));
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = I18n.t('form.submit');

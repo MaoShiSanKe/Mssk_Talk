@@ -65,13 +65,21 @@ const DB = (() => {
 
   // ── 消息相关 ──────────────────────────────────────────────
 
-  async function sendMessage({ visitorId, content, imageUrl, contact }) {
-    return _post('messages', {
-      visitor_id: visitorId,
-      content,
-      image_url: imageUrl || null,
-      contact: contact || null,
+  async function sendMessage({ visitorId, content, imageUrl, contact, honeypot }) {
+    const res = await fetch('/api/message', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        visitorId,
+        content,
+        imageUrl: imageUrl || null,
+        contact: contact || null,
+        _hp: honeypot || '',   // Honeypot 字段
+      }),
     });
+    const data = await res.json();
+    if (!res.ok || data.error) throw new Error(data.error ?? '发送失败');
+    return data;
   }
 
   async function getMyMessages(visitorId) {

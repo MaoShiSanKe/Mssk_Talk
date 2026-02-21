@@ -309,7 +309,9 @@
   </header>
 
   <div class="card">
-    <form id="message-form">
+    <form id="message-form" autocomplete="off">
+      <!-- Honeypot：人不会看到，机器人会填，服务端检测到有值则拦截 -->
+      <input type="text" id="_hp" name="_hp" style="display:none;position:absolute;left:-9999px;" tabindex="-1" autocomplete="off">
       <div class="form-group">
         <textarea
           id="message-content"
