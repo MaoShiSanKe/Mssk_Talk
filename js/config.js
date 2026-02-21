@@ -18,7 +18,14 @@ const CONFIG = {
     requireContact: false,
     maxMessageLength: 2000,
     dailyLimit: 0,
+    showFeatured: false,
+    featuredCount: 10,
+    featuredAuto: true,
+    showReplies: true,
+    showPinned: true,
   },
+
+  featuredBubbles: [],
 
   storage: {
     visitorId: 'mssk_visitor_id',
@@ -34,5 +41,6 @@ const CONFIG = {
     this.supabase.publishableKey = remote.supabasePublishableKey;
     this.defaultLang = remote.defaultLang ?? 'zh';
     if (remote.settings) this.settings = { ...this.settings, ...remote.settings };
+    if (remote.featuredBubbles) this.featuredBubbles = remote.featuredBubbles;
   },
 };

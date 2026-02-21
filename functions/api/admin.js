@@ -35,6 +35,25 @@ export async function onRequestPost(context) {
     let result;
 
     switch (action) {
+      case 'getFeaturedMessages': {
+        // 获取手动勾选的精选留言
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/messages?is_featured=eq.true&is_blocked=eq.false&select=id,content&order=created_at.desc`,
+          { headers }
+        );
+        result = await res.json();
+        break;
+      }
+
+      case 'setFeatured': {
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/messages?id=eq.${payload.messageId}`,
+          { method: 'PATCH', headers, body: JSON.stringify({ is_featured: payload.featured }) }
+        );
+        result = await res.json();
+        break;
+      }
+
       case 'getVisitorStats': {
         const now = new Date();
         const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();

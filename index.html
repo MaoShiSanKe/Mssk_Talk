@@ -40,7 +40,49 @@
       --shadow: 0 2px 12px rgba(0,0,0,0.3);
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    /* 漂浮留言墙 */
+    #bubble-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+
+    .bubble {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+      opacity: 0.22;
+      cursor: default;
+      user-select: none;
+      white-space: nowrap;
+      max-width: 200px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      transition: opacity 0.3s, transform 0.1s;
+      will-change: transform;
+    }
+
+    .bubble-hover {
+      opacity: 0.9 !important;
+      z-index: 1;
+      white-space: normal;
+      max-width: 240px;
+      cursor: text;
+    }
+
+    /* 确保主内容在气泡层上方 */
+    header, .card, footer {
+      position: relative;
+      z-index: 1;
+    }
 
     body {
       font-family: 'Noto Sans SC', sans-serif;
@@ -341,7 +383,10 @@
 </head>
 <body>
 
-  <header>
+  <!-- 漂浮留言墙背景层（showFeatured 开启时显示） -->
+<div id="bubble-layer" style="display:none"></div>
+
+<header>
     <h1 data-i18n="site.title">留言给我</h1>
     <p data-i18n="site.description">你的消息会以匿名方式送达，联系方式完全可选。</p>
   </header>
@@ -412,6 +457,7 @@
   <script src="./js/i18n.js"></script>
   <script src="./js/supabase.js"></script>
   <script src="./js/visitor.js"></script>
+  <script src="./js/bubbles.js"></script>
   <script src="./js/main.js"></script>
 </body>
 </html>

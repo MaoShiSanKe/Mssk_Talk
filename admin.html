@@ -419,6 +419,26 @@
     }
 
     /* 回复区域 */
+    .btn-featured {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 3px 10px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-family: inherit;
+    }
+
+    .btn-featured.on {
+      border-color: #c8a03a;
+      color: #c8a03a;
+      background: rgba(200,160,58,0.08);
+    }
+
+    .btn-featured:hover { border-color: #c8a03a; color: #c8a03a; }
+    .btn-featured:disabled { opacity: 0.5; cursor: not-allowed; }
+
     .btn-reply-toggle {
       background: none;
       border: 1px solid var(--border);

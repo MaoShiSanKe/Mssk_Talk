@@ -191,11 +191,15 @@
 
   // ── 设置面板 ───────────────────────────────────────────────
   const SETTING_META = {
-    show_history:       { type: 'bool',   label: '显示历史记录',      desc: '用户端是否显示"查看历史记录"入口' },
-    allow_messages:     { type: 'bool',   label: '允许留言',          desc: '关闭后用户无法发送新消息' },
-    require_contact:    { type: 'bool',   label: '强制填写联系方式',  desc: '开启后联系方式变为必填项' },
-    max_message_length: { type: 'number', label: '最大字数',          desc: '单条消息最大字符数' },
-    daily_limit:        { type: 'number', label: '每日留言上限',      desc: '同一用户每日最多发送条数，0 为不限制' },
+    show_history:        { type: 'bool',   label: '显示历史记录',        desc: '用户端是否显示"查看历史记录"入口' },
+    allow_messages:      { type: 'bool',   label: '允许留言',            desc: '关闭后用户无法发送新消息' },
+    require_contact:     { type: 'bool',   label: '强制填写联系方式',    desc: '开启后联系方式变为必填项' },
+    max_message_length:  { type: 'number', label: '最大字数',            desc: '单条消息最大字符数' },
+    daily_limit:         { type: 'number', label: '每日留言上限',        desc: '同一用户每日最多发送条数，0 为不限制' },
+    show_replies:        { type: 'bool',   label: '显示管理员回复',      desc: '用户端历史记录中是否显示回复' },
+    show_featured:       { type: 'bool',   label: '开启漂浮留言墙',      desc: '在用户端背景显示漂浮气泡留言' },
+    featured_count:      { type: 'number', label: '漂浮留言数量上限',    desc: '同时漂浮的留言气泡数量，推荐 8-12' },
+    featured_auto:       { type: 'bool',   label: '自动补齐漂浮留言',    desc: '手动精选数量不足时，自动从留言中随机补齐' },
   };
 
   async function loadSettings() {
@@ -525,6 +529,9 @@
           <button class="btn-block-msg ${m.is_blocked ? 'unblock' : ''}" data-msg-id="${m.id}" data-blocked="${m.is_blocked}">
             ${m.is_blocked ? '解除屏蔽' : '屏蔽消息'}
           </button>
+          <button class="btn-featured ${m.is_featured ? 'on' : ''}" data-msg-id="${m.id}" data-featured="${!!m.is_featured}" title="加入漂浮留言墙">
+            ${m.is_featured ? '✨ 已精选' : '✨ 精选'}
+          </button>
           <button class="btn-reply-toggle" data-msg-id="${m.id}">💬 ${hasReplies ? '查看回复' : '回复'}</button>
         </div>
       </div>
@@ -643,6 +650,22 @@
         if (!groupState[vid]) groupState[vid] = { open: false, page: 1 };
         groupState[vid].open = !groupState[vid].open;
         renderMessages();
+      });
+    });
+
+    // 精选/取消精选
+    document.querySelectorAll('.btn-featured').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        const isFeatured = btn.dataset.featured === 'true';
+        btn.disabled = true;
+        await DB.adminSetFeatured(btn.dataset.msgId, !isFeatured);
+        const msg = allMessages.find(m => m.id === btn.dataset.msgId);
+        if (msg) msg.is_featured = !isFeatured;
+        btn.dataset.featured = String(!isFeatured);
+        btn.textContent = !isFeatured ? '✨ 已精选' : '✨ 精选';
+        btn.classList.toggle('on', !isFeatured);
+        btn.disabled = false;
       });
     });
 

@@ -15,6 +15,9 @@
   const savedLang = localStorage.getItem(CONFIG.storage.lang) || CONFIG.defaultLang;
   await I18n.load(savedLang);
 
+  // 漂浮留言墙
+  Bubbles.init();
+
   // 初始化访客身份
   let visitorId;
   try {

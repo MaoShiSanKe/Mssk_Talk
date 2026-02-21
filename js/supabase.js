@@ -149,6 +149,14 @@ const DB = (() => {
     return _get(`replies?message_id=eq.${messageId}&order=created_at.asc`);
   }
 
+  async function adminSetFeatured(messageId, featured) {
+    return _adminCall('setFeatured', { messageId, featured });
+  }
+
+  async function adminGetFeaturedMessages() {
+    return _adminCall('getFeaturedMessages');
+  }
+
   async function adminGetVisitorStats() {
     return _adminCall('getVisitorStats');
   }
@@ -167,6 +175,7 @@ const DB = (() => {
     adminGetAllMessages, adminGetStats, adminGetVisitorStats,
     adminMarkRead, adminBlockVisitor, adminBlockMessage, adminSaveNote,
     adminGetReplies, adminAddReply, adminEditReply, adminDeleteReply,
+    adminSetFeatured, adminGetFeaturedMessages,
     adminGetSettings, adminSaveSetting,
   };
 })();
