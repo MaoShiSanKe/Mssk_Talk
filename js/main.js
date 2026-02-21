@@ -15,6 +15,27 @@
   const savedLang = localStorage.getItem(CONFIG.storage.lang) || CONFIG.defaultLang;
   await I18n.load(savedLang);
 
+  // ── 置顶消息 ───────────────────────────────────────────────
+  if (CONFIG.settings.showPinned && CONFIG.pinnedMessages?.length) {
+    const pinnedSection = document.getElementById('pinned-section');
+    const pinnedList = document.getElementById('pinned-list');
+    const pinnedToggle = document.getElementById('pinned-toggle');
+    if (pinnedSection && pinnedList && pinnedToggle) {
+      pinnedSection.style.display = 'block';
+      pinnedToggle.addEventListener('click', () => {
+        const isHidden = pinnedList.style.display === 'none';
+        pinnedList.style.display = isHidden ? 'block' : 'none';
+        pinnedToggle.textContent = isHidden ? '收起 ▴' : '置顶消息 ▾';
+      });
+      pinnedList.innerHTML = CONFIG.pinnedMessages.map(m => `
+        <div class="pinned-item">
+          <p class="pinned-content">${escapeHtml(m.content)}</p>
+          <span class="pinned-time">${formatTime(m.created_at)}</span>
+        </div>
+      `).join('');
+    }
+  }
+
   // 漂浮留言墙
   Bubbles.init();
 

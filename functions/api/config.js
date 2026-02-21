@@ -16,11 +16,13 @@ export async function onRequestGet(context) {
   // 并行读取 settings 和精选留言
   let settings = {};
   let featuredMessages = [];
+  let pinnedMessages = [];
 
   try {
-    const [settingsRes, featuredRes] = await Promise.all([
+    const [settingsRes, featuredRes, pinnedRes] = await Promise.all([
       fetch(`${supabaseUrl}/rest/v1/settings?select=key,value`, { headers: dbHeaders }),
       fetch(`${supabaseUrl}/rest/v1/messages?is_featured=eq.true&is_blocked=eq.false&select=id,content&order=created_at.desc`, { headers: dbHeaders }),
+      fetch(`${supabaseUrl}/rest/v1/messages?is_pinned=eq.true&is_blocked=eq.false&select=id,content,created_at&order=created_at.desc`, { headers: dbHeaders }),
     ]);
 
     const rows = await settingsRes.json();
@@ -30,6 +32,9 @@ export async function onRequestGet(context) {
 
     const featured = await featuredRes.json();
     if (Array.isArray(featured)) featuredMessages = featured;
+
+    const pinned = await pinnedRes.json();
+    if (Array.isArray(pinned)) pinnedMessages = pinned;
   } catch { }
 
   const showFeatured = settings.show_featured === 'true';
@@ -77,6 +82,12 @@ export async function onRequestGet(context) {
     featuredBubbles: showFeatured ? bubbles.map(m => ({
       id: m.id,
       content: m.content.slice(0, 20) + (m.content.length > 20 ? '…' : ''),
+    })) : [],
+    // 置顶消息（showPinned 开启时下发）
+    pinnedMessages: settings.show_pinned !== 'false' ? pinnedMessages.map(m => ({
+      id: m.id,
+      content: m.content,
+      created_at: m.created_at,
     })) : [],
   };
 

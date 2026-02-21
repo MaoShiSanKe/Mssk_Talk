@@ -149,6 +149,10 @@ const DB = (() => {
     return _get(`replies?message_id=eq.${messageId}&order=created_at.asc`);
   }
 
+  async function adminSetPinned(messageId, pinned) {
+    return _adminCall('setPinned', { messageId, pinned });
+  }
+
   async function adminSetFeatured(messageId, featured) {
     return _adminCall('setFeatured', { messageId, featured });
   }
@@ -175,7 +179,7 @@ const DB = (() => {
     adminGetAllMessages, adminGetStats, adminGetVisitorStats,
     adminMarkRead, adminBlockVisitor, adminBlockMessage, adminSaveNote,
     adminGetReplies, adminAddReply, adminEditReply, adminDeleteReply,
-    adminSetFeatured, adminGetFeaturedMessages,
+    adminSetPinned, adminSetFeatured, adminGetFeaturedMessages,
     adminGetSettings, adminSaveSetting,
   };
 })();

@@ -35,6 +35,24 @@ export async function onRequestPost(context) {
     let result;
 
     switch (action) {
+      case 'setPinned': {
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/messages?id=eq.${payload.messageId}`,
+          { method: 'PATCH', headers, body: JSON.stringify({ is_pinned: payload.pinned }) }
+        );
+        result = await res.json();
+        break;
+      }
+
+      case 'getPinnedMessages': {
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/messages?is_pinned=eq.true&is_blocked=eq.false&select=id,content,created_at&order=created_at.desc`,
+          { headers }
+        );
+        result = await res.json();
+        break;
+      }
+
       case 'getFeaturedMessages': {
         // 获取手动勾选的精选留言
         const res = await fetch(
@@ -162,7 +180,6 @@ export async function onRequestPost(context) {
         result = await res.json();
         break;
       }
-
       case 'getStats': {
         const [msgs, visitors] = await Promise.all([
           fetch(`${supabaseUrl}/rest/v1/messages?select=id,is_read,is_blocked`, { headers }).then(r => r.json()),

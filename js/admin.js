@@ -197,6 +197,7 @@
     max_message_length:  { type: 'number', label: '最大字数',            desc: '单条消息最大字符数' },
     daily_limit:         { type: 'number', label: '每日留言上限',        desc: '同一用户每日最多发送条数，0 为不限制' },
     show_replies:        { type: 'bool',   label: '显示管理员回复',      desc: '用户端历史记录中是否显示回复' },
+    show_pinned:         { type: 'bool',   label: '显示置顶消息',        desc: '用户端是否显示置顶消息入口' },
     show_featured:       { type: 'bool',   label: '开启漂浮留言墙',      desc: '在用户端背景显示漂浮气泡留言' },
     featured_count:      { type: 'number', label: '漂浮留言数量上限',    desc: '同时漂浮的留言气泡数量，推荐 8-12' },
     featured_auto:       { type: 'bool',   label: '自动补齐漂浮留言',    desc: '手动精选数量不足时，自动从留言中随机补齐' },
@@ -532,6 +533,9 @@
           <button class="btn-featured ${m.is_featured ? 'on' : ''}" data-msg-id="${m.id}" data-featured="${!!m.is_featured}" title="加入漂浮留言墙">
             ${m.is_featured ? '✨ 已精选' : '✨ 精选'}
           </button>
+          <button class="btn-pinned ${m.is_pinned ? 'on' : ''}" data-msg-id="${m.id}" data-pinned="${!!m.is_pinned}" title="置顶消息">
+            ${m.is_pinned ? '📌 已置顶' : '📌 置顶'}
+          </button>
           <button class="btn-reply-toggle" data-msg-id="${m.id}">💬 ${hasReplies ? '查看回复' : '回复'}</button>
         </div>
       </div>
@@ -650,6 +654,22 @@
         if (!groupState[vid]) groupState[vid] = { open: false, page: 1 };
         groupState[vid].open = !groupState[vid].open;
         renderMessages();
+      });
+    });
+
+    // 置顶/取消置顶
+    document.querySelectorAll('.btn-pinned').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        const isPinned = btn.dataset.pinned === 'true';
+        btn.disabled = true;
+        await DB.adminSetPinned(btn.dataset.msgId, !isPinned);
+        const msg = allMessages.find(m => m.id === btn.dataset.msgId);
+        if (msg) msg.is_pinned = !isPinned;
+        btn.dataset.pinned = String(!isPinned);
+        btn.textContent = !isPinned ? '📌 已置顶' : '📌 置顶';
+        btn.classList.toggle('on', !isPinned);
+        btn.disabled = false;
       });
     });
 

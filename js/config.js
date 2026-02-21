@@ -26,6 +26,7 @@ const CONFIG = {
   },
 
   featuredBubbles: [],
+  pinnedMessages: [],
 
   storage: {
     visitorId: 'mssk_visitor_id',
@@ -42,5 +43,6 @@ const CONFIG = {
     this.defaultLang = remote.defaultLang ?? 'zh';
     if (remote.settings) this.settings = { ...this.settings, ...remote.settings };
     if (remote.featuredBubbles) this.featuredBubbles = remote.featuredBubbles;
+    if (remote.pinnedMessages) this.pinnedMessages = remote.pinnedMessages;
   },
 };
