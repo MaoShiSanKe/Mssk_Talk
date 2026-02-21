@@ -341,7 +341,9 @@
     if (!groupState[vid]) groupState[vid] = { open: false, page: 1 };
     const state = groupState[vid];
 
-    // 最新一条消息作为预览（messages 已按 created_at desc 排序）
+    const displayName = note
+      ? `<span class="visitor-name">${escapeHtml(note)}</span><span class="visitor-id" title="${vid}">#${shortId}</span>`
+      : `<span class="visitor-id" title="${vid}">#${shortId}</span>`;
     const preview = messages[0];
     const previewText = preview?.content?.slice(0, 60) + (preview?.content?.length > 60 ? '…' : '');
 
@@ -357,7 +359,7 @@
       <div class="visitor-header group-toggle" data-vid="${vid}" style="cursor:pointer">
         <div class="visitor-info">
           <span class="toggle-arrow">${state.open ? '▾' : '▸'}</span>
-          <span class="visitor-id">${I18n.t('admin.visitor_id')} #${shortId}</span>
+          ${displayName}
           ${isBlocked ? `<span class="badge blocked">${I18n.t('admin.blocked_badge')}</span>` : ''}
           ${unreadCount > 0 ? `<span class="badge unread">${I18n.t('admin.unread_badge')} ${unreadCount}</span>` : ''}
           <span class="msg-count">${totalCount} 条</span>
@@ -370,7 +372,7 @@
         </div>
       </div>
 
-      <!-- 折叠时显示预览 -->
+      <!-- 最新一条消息作为预览（messages 已按 created_at desc 排序） -->
       ${!state.open ? `
       <div class="group-preview" data-vid="${vid}" style="cursor:pointer">
         <span class="preview-text">${escapeHtml(previewText)}</span>

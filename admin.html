@@ -8,18 +8,37 @@
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #f0f0f0;
+      --bg: #f7f5f0;
       --surface: #ffffff;
-      --border: #e0e0e0;
-      --text: #1a1a1a;
-      --text-secondary: #666;
-      --accent: #3a5a8a;
-      --accent-light: #e8f0fa;
-      --success: #2d6a4f;
-      --error: #8b2020;
-      --blocked-bg: #fff5f5;
-      --unread-bg: #f0f5ff;
+      --border: #e0dbd0;
+      --text: #2a2420;
+      --text-secondary: #8a8078;
+      --accent: #5c4a3a;
+      --accent-light: #f0ebe0;
+      --success: #3d6b4f;
+      --success-bg: #edf5f0;
+      --error: #8b3a3a;
+      --error-bg: #fdf0f0;
+      --blocked-bg: #fdf5f0;
+      --unread-bg: #f5f0fa;
       --radius: 8px;
+      --shadow: 0 2px 12px rgba(60,40,20,0.08);
+    }
+
+    [data-theme="dark"] {
+      --bg: #1a1714;
+      --surface: #242018;
+      --border: #3a3530;
+      --text: #e8e0d8;
+      --text-secondary: #9a9088;
+      --accent: #c8a87a;
+      --accent-light: #2a2418;
+      --success: #5a9a70;
+      --success-bg: #1a2a20;
+      --error: #c87a7a;
+      --error-bg: #2a1818;
+      --blocked-bg: #2a1e1a;
+      --unread-bg: #1e1a2a;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -456,10 +475,17 @@
       gap: 8px;
     }
 
+    .visitor-name {
+      font-size: 0.9rem;
+      color: var(--text);
+      font-weight: 500;
+    }
+
     .visitor-id {
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       color: var(--text-secondary);
       font-family: monospace;
+      cursor: default;
     }
 
     .badge {
@@ -707,7 +733,10 @@
   <div id="admin-screen">
     <div class="topbar">
       <h1 data-i18n="admin.login_title">管理后台</h1>
-      <button id="logout-btn" data-i18n="admin.logout">退出</button>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <button class="theme-toggle" style="background:none;border:none;cursor:pointer;font-size:1rem;padding:4px;" title="切换主题">🌙</button>
+        <button id="logout-btn" data-i18n="admin.logout">退出</button>
+      </div>
     </div>
 
     <div class="main-content">
@@ -764,6 +793,7 @@
     <a href="https://github.com/MaoShiSanKe/Mssk_Talk" target="_blank" rel="noopener">Mssk_Talk on GitHub</a>
   </footer>
 
+  <script src="./js/theme.js"></script>
   <script src="./js/config.js"></script>
   <script src="./js/i18n.js"></script>
   <script src="./js/supabase.js"></script>

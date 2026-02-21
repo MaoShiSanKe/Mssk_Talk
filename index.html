@@ -24,6 +24,22 @@
       --shadow: 0 2px 12px rgba(60,40,20,0.08);
     }
 
+    [data-theme="dark"] {
+      --bg: #1a1714;
+      --surface: #242018;
+      --border: #3a3530;
+      --text: #e8e0d8;
+      --text-secondary: #9a9088;
+      --accent: #c8a87a;
+      --accent-light: #2a2418;
+      --success: #5a9a70;
+      --success-bg: #1a2a20;
+      --error: #c87a7a;
+      --error-bg: #2a1818;
+      --unread: #2a2438;
+      --shadow: 0 2px 12px rgba(0,0,0,0.3);
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -344,11 +360,13 @@
     </div>
   </div>
 
-  <footer style="text-align:center;padding:32px 16px 16px;font-size:0.78rem;">
+  <footer style="text-align:center;padding:32px 16px 16px;font-size:0.78rem;display:flex;align-items:center;justify-content:center;gap:16px;">
     <a href="https://github.com/MaoShiSanKe/Mssk_Talk" target="_blank" rel="noopener"
-      style="color:#8a8078;text-decoration:none;">Mssk_Talk on GitHub</a>
+      style="color:var(--text-secondary);text-decoration:none;">Mssk_Talk on GitHub</a>
+    <button class="theme-toggle" style="background:none;border:none;cursor:pointer;font-size:1rem;padding:0;" title="切换主题">🌙</button>
   </footer>
 
+  <script src="./js/theme.js"></script>
   <script src="./js/config.js"></script>
   <script src="./js/i18n.js"></script>
   <script src="./js/supabase.js"></script>
