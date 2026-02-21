@@ -432,7 +432,60 @@
       height: 36px;
     }
 
-    .btn-send-reply:disabled { opacity: 0.6; cursor: not-allowed; }
+    .badge.replied {
+      background: var(--accent-light);
+      color: var(--accent);
+      border: 1px solid var(--border);
+      opacity: 0.9;
+    }
+
+    .reply-send-col {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      align-items: flex-end;
+      flex-shrink: 0;
+    }
+
+    .reply-email-check {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .reply-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .btn-edit-reply, .btn-save-reply, .btn-cancel-reply {
+      background: none;
+      border: none;
+      font-size: 0.75rem;
+      color: var(--accent);
+      cursor: pointer;
+      padding: 0;
+      font-family: inherit;
+    }
+
+    .btn-cancel-reply { color: var(--text-secondary); }
+
+    .reply-edit-input {
+      width: 100%;
+      border: 1px solid var(--accent);
+      border-radius: 6px;
+      padding: 6px 8px;
+      font-size: 0.88rem;
+      font-family: inherit;
+      resize: none;
+      outline: none;
+      background: var(--surface);
+      color: var(--text);
+    }
     .toolbar {
       display: flex;
       align-items: center;

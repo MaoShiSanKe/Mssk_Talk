@@ -60,11 +60,20 @@ export async function onRequestPost(context) {
           `${supabaseUrl}/rest/v1/messages?id=eq.${payload.messageId}`,
           { method: 'PATCH', headers, body: JSON.stringify({ is_read: true }) }
         );
-        // 如果有联系邮件且通知配置存在，发邮件通知用户
-        if (payload.contact && payload.contact.includes('@') &&
+        // 只有前端明确要求发邮件时才发
+        if (payload.sendEmail && payload.contact?.includes('@') &&
             env.NOTIFY_RESEND_KEY && env.NOTIFY_EMAIL_FROM) {
           await notifyUserReply(env, payload.contact, payload.content, payload.originalContent);
         }
+        break;
+      }
+
+      case 'editReply': {
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/replies?id=eq.${payload.replyId}`,
+          { method: 'PATCH', headers, body: JSON.stringify({ content: payload.content, updated_at: new Date().toISOString() }) }
+        );
+        result = await res.json();
         break;
       }
 
@@ -93,9 +102,8 @@ export async function onRequestPost(context) {
       }
 
       case 'getMessages': {
-        // showBlocked=true 时显示所有消息，false 时隐藏已屏蔽消息
         const params = new URLSearchParams({
-          select: '*, visitors(is_blocked, note)',
+          select: '*, visitors(is_blocked, note), replies(id)',
           order: 'created_at.desc',
           ...(payload?.unreadOnly ? { is_read: 'eq.false' } : {}),
           ...(payload?.showBlocked ? {} : { is_blocked: 'eq.false' }),

@@ -460,6 +460,7 @@
   }
 
   function renderMessage(m) {
+    const hasReplies = m.replies && m.replies.length > 0;
     return `
     <div class="message-item ${m.is_read ? '' : 'unread'} ${m.is_blocked ? 'msg-blocked' : ''}" data-msg-id="${m.id}">
       ${m.is_blocked ? '<span class="blocked-badge">已屏蔽</span>' : ''}
@@ -469,25 +470,30 @@
       <div class="msg-footer">
         <span class="msg-time">${formatTime(m.created_at)}</span>
         <div class="msg-actions">
+          ${hasReplies ? `<span class="badge replied">💬 已回复</span>` : ''}
           ${!m.is_read ? `<button class="btn-read" data-msg-id="${m.id}">${I18n.t('admin.mark_read')}</button>` : ''}
           <button class="btn-block-msg ${m.is_blocked ? 'unblock' : ''}" data-msg-id="${m.id}" data-blocked="${m.is_blocked}">
             ${m.is_blocked ? '解除屏蔽' : '屏蔽消息'}
           </button>
-          <button class="btn-reply-toggle" data-msg-id="${m.id}">💬 回复</button>
+          <button class="btn-reply-toggle" data-msg-id="${m.id}">💬 ${hasReplies ? '查看回复' : '回复'}</button>
         </div>
       </div>
 
       <!-- 回复区域（懒加载） -->
       <div class="reply-area" id="reply-area-${m.id}" style="display:none">
-        <div class="reply-list" id="reply-list-${m.id}">
-          <p class="loading" style="font-size:0.8rem;">加载中…</p>
-        </div>
+        <div class="reply-list" id="reply-list-${m.id}"></div>
         <div class="reply-input-row">
           <textarea class="reply-input" id="reply-input-${m.id}"
             placeholder="输入回复内容…" rows="2"></textarea>
-          <button class="btn-send-reply" data-msg-id="${m.id}"
-            data-contact="${escapeAttr(m.contact ?? '')}"
-            data-original="${escapeAttr(m.content)}">发送</button>
+          <div class="reply-send-col">
+            ${m.contact?.includes('@') ? `
+            <label class="reply-email-check">
+              <input type="checkbox" id="reply-email-${m.id}"> 发送邮件通知用户
+            </label>` : ''}
+            <button class="btn-send-reply" data-msg-id="${m.id}"
+              data-contact="${escapeAttr(m.contact ?? '')}"
+              data-original="${escapeAttr(m.content)}">发送回复</button>
+          </div>
         </div>
       </div>
     </div>`;
@@ -497,21 +503,64 @@
     const el = document.getElementById(`reply-list-${msgId}`);
     if (!el) return;
     if (!replies.length) {
-      el.innerHTML = '<p class="empty" style="font-size:0.8rem;">暂无回复</p>';
+      el.innerHTML = '<p class="empty" style="font-size:0.8rem;padding:4px 0;">暂无回复，发送第一条回复</p>';
       return;
     }
     el.innerHTML = replies.map(r => `
       <div class="reply-item" data-reply-id="${r.id}">
-        <p class="reply-content">${escapeHtml(r.content)}</p>
+        <div class="reply-body">
+          <p class="reply-content" id="reply-content-${r.id}">${escapeHtml(r.content)}</p>
+          <textarea class="reply-edit-input" id="reply-edit-${r.id}" style="display:none" rows="2">${escapeHtml(r.content)}</textarea>
+        </div>
         <div class="reply-footer">
-          <span class="reply-time">${formatTime(r.created_at)}</span>
-          <button class="btn-delete-reply" data-reply-id="${r.id}" data-msg-id="${msgId}">删除</button>
+          <span class="reply-time">${formatTime(r.created_at)}${r.updated_at ? ' (已编辑)' : ''}</span>
+          <div class="reply-actions">
+            <button class="btn-edit-reply" data-reply-id="${r.id}" data-msg-id="${msgId}">编辑</button>
+            <button class="btn-save-reply" data-reply-id="${r.id}" data-msg-id="${msgId}" style="display:none">保存</button>
+            <button class="btn-cancel-reply" data-reply-id="${r.id}" style="display:none">取消</button>
+            <button class="btn-delete-reply" data-reply-id="${r.id}" data-msg-id="${msgId}">删除</button>
+          </div>
         </div>
       </div>
     `).join('');
-    // 绑定删除
+
+    // 绑定编辑/保存/取消/删除
+    el.querySelectorAll('.btn-edit-reply').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const rid = btn.dataset.replyId;
+        document.getElementById(`reply-content-${rid}`).style.display = 'none';
+        document.getElementById(`reply-edit-${rid}`).style.display = 'block';
+        btn.style.display = 'none';
+        el.querySelector(`.btn-save-reply[data-reply-id="${rid}"]`).style.display = '';
+        el.querySelector(`.btn-cancel-reply[data-reply-id="${rid}"]`).style.display = '';
+      });
+    });
+
+    el.querySelectorAll('.btn-cancel-reply').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const rid = btn.dataset.replyId;
+        document.getElementById(`reply-content-${rid}`).style.display = '';
+        document.getElementById(`reply-edit-${rid}`).style.display = 'none';
+        btn.style.display = 'none';
+        el.querySelector(`.btn-save-reply[data-reply-id="${rid}"]`).style.display = 'none';
+        el.querySelector(`.btn-edit-reply[data-reply-id="${rid}"]`).style.display = '';
+      });
+    });
+
+    el.querySelectorAll('.btn-save-reply').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const rid = btn.dataset.replyId;
+        const newContent = document.getElementById(`reply-edit-${rid}`).value.trim();
+        if (!newContent) return;
+        btn.disabled = true;
+        await DB.adminEditReply(rid, newContent);
+        await loadReplies(btn.dataset.msgId);
+      });
+    });
+
     el.querySelectorAll('.btn-delete-reply').forEach(btn => {
       btn.addEventListener('click', async () => {
+        if (!confirm('确定删除这条回复？')) return;
         await DB.adminDeleteReply(btn.dataset.replyId);
         await loadReplies(btn.dataset.msgId);
       });
@@ -519,6 +568,8 @@
   }
 
   async function loadReplies(msgId) {
+    const el = document.getElementById(`reply-list-${msgId}`);
+    if (el) el.innerHTML = '<p class="loading" style="font-size:0.8rem;">加载中…</p>';
     const replies = await DB.adminGetReplies(msgId);
     renderReplyList(msgId, replies);
   }
@@ -566,15 +617,18 @@
         const input = document.getElementById(`reply-input-${msgId}`);
         const content = input.value.trim();
         if (!content) return;
+        const sendEmail = document.getElementById(`reply-email-${msgId}`)?.checked ?? false;
         btn.disabled = true;
         btn.textContent = '发送中…';
-        await DB.adminAddReply(msgId, content, btn.dataset.contact, btn.dataset.original);
+        await DB.adminAddReply(msgId, content, btn.dataset.contact, btn.dataset.original, sendEmail);
         input.value = '';
+        if (document.getElementById(`reply-email-${msgId}`)) {
+          document.getElementById(`reply-email-${msgId}`).checked = false;
+        }
         btn.disabled = false;
-        btn.textContent = '发送';
-        // 同步更新本地已读状态
+        btn.textContent = '发送回复';
         const msg = allMessages.find(m => m.id === msgId);
-        if (msg) msg.is_read = true;
+        if (msg) { msg.is_read = true; if (!msg.replies) msg.replies = [{}]; }
         await loadReplies(msgId);
         loadStats();
       });

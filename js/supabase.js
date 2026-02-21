@@ -132,8 +132,12 @@ const DB = (() => {
     return _adminCall('getReplies', { messageId });
   }
 
-  async function adminAddReply(messageId, content, contact, originalContent) {
-    return _adminCall('addReply', { messageId, content, contact, originalContent });
+  async function adminAddReply(messageId, content, contact, originalContent, sendEmail = false) {
+    return _adminCall('addReply', { messageId, content, contact, originalContent, sendEmail });
+  }
+
+  async function adminEditReply(replyId, content) {
+    return _adminCall('editReply', { replyId, content });
   }
 
   async function adminDeleteReply(replyId) {
@@ -158,7 +162,7 @@ const DB = (() => {
     sendMessage, getMyMessages, getReplies,
     adminGetAllMessages, adminGetStats,
     adminMarkRead, adminBlockVisitor, adminBlockMessage, adminSaveNote,
-    adminGetReplies, adminAddReply, adminDeleteReply,
+    adminGetReplies, adminAddReply, adminEditReply, adminDeleteReply,
     adminGetSettings, adminSaveSetting,
   };
 })();
