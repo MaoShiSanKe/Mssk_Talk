@@ -125,6 +125,56 @@
     }, 300);
   });
 
+  // ── 访客统计面板 ───────────────────────────────────────────
+  let vstatsLoaded = false;
+  document.getElementById('vstats-toggle').addEventListener('click', () => {
+    const panel = document.getElementById('vstats-panel');
+    const arrow = document.getElementById('vstats-arrow');
+    const isHidden = panel.style.display === 'none';
+    panel.style.display = isHidden ? 'block' : 'none';
+    arrow.textContent = isHidden ? '▾' : '▸';
+    if (isHidden && !vstatsLoaded) {
+      vstatsLoaded = true;
+      loadVisitorStats();
+    }
+  });
+
+  async function loadVisitorStats() {
+    const panel = document.getElementById('vstats-panel');
+    try {
+      const stats = await DB.adminGetVisitorStats();
+      const max = Math.max(...stats.dailyMessages.map(d => d.count), 1);
+
+      panel.innerHTML = `
+        <div class="vstats-cards">
+          <div class="vstats-card">
+            <div class="vstats-number">${stats.totalVisitors}</div>
+            <div class="vstats-label">总访客</div>
+          </div>
+          <div class="vstats-card">
+            <div class="vstats-number">${stats.todayNewVisitors}</div>
+            <div class="vstats-label">今日新增</div>
+          </div>
+        </div>
+        <div class="vstats-chart-title">近 7 天消息量</div>
+        <div class="vstats-chart">
+          ${stats.dailyMessages.map(d => {
+            const pct = Math.round((d.count / max) * 100);
+            const label = d.date.slice(5); // MM-DD
+            return `
+              <div class="vstats-bar-col">
+                <div class="vstats-bar-count">${d.count || ''}</div>
+                <div class="vstats-bar" style="height:${Math.max(pct, 2)}%"></div>
+                <div class="vstats-bar-label">${label}</div>
+              </div>`;
+          }).join('')}
+        </div>
+      `;
+    } catch (e) {
+      panel.innerHTML = `<p class="empty">加载失败：${e.message}</p>`;
+    }
+  }
+
   // ── 设置面板折叠 ───────────────────────────────────────────
   let settingsLoaded = false;
   document.getElementById('settings-toggle').addEventListener('click', () => {

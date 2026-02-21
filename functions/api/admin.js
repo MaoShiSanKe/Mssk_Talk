@@ -35,6 +35,37 @@ export async function onRequestPost(context) {
     let result;
 
     switch (action) {
+      case 'getVisitorStats': {
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+        const sevenDaysAgo = new Date(now - 7 * 86400000).toISOString();
+
+        const [visitors, todayVisitors, recentMessages] = await Promise.all([
+          fetch(`${supabaseUrl}/rest/v1/visitors?select=id,created_at`, { headers }).then(r => r.json()),
+          fetch(`${supabaseUrl}/rest/v1/visitors?select=id&created_at=gte.${todayStart}`, { headers }).then(r => r.json()),
+          fetch(`${supabaseUrl}/rest/v1/messages?select=created_at&created_at=gte.${sevenDaysAgo}&is_blocked=eq.false`, { headers }).then(r => r.json()),
+        ]);
+
+        // 近7天每天消息数
+        const daily = {};
+        for (let i = 6; i >= 0; i--) {
+          const d = new Date(now - i * 86400000);
+          const key = d.toISOString().slice(0, 10);
+          daily[key] = 0;
+        }
+        for (const m of recentMessages) {
+          const key = m.created_at.slice(0, 10);
+          if (key in daily) daily[key]++;
+        }
+
+        result = {
+          totalVisitors: visitors.length,
+          todayNewVisitors: todayVisitors.length,
+          dailyMessages: Object.entries(daily).map(([date, count]) => ({ date, count })),
+        };
+        break;
+      }
+
       case 'getReplies': {
         // 获取某条消息的所有回复
         const res = await fetch(

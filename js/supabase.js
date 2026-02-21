@@ -149,6 +149,10 @@ const DB = (() => {
     return _get(`replies?message_id=eq.${messageId}&order=created_at.asc`);
   }
 
+  async function adminGetVisitorStats() {
+    return _adminCall('getVisitorStats');
+  }
+
   async function adminGetSettings() {
     return _adminCall('getSettings');
   }
@@ -160,7 +164,7 @@ const DB = (() => {
   return {
     createVisitor, getVisitor, isBlocked,
     sendMessage, getMyMessages, getReplies,
-    adminGetAllMessages, adminGetStats,
+    adminGetAllMessages, adminGetStats, adminGetVisitorStats,
     adminMarkRead, adminBlockVisitor, adminBlockMessage, adminSaveNote,
     adminGetReplies, adminAddReply, adminEditReply, adminDeleteReply,
     adminGetSettings, adminSaveSetting,

@@ -247,7 +247,86 @@
 
     .section-toggle:hover { color: var(--accent); }
 
-    /* 设置面板 */
+    /* 访客统计面板 */
+    .vstats-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+      margin-bottom: 8px;
+    }
+
+    .vstats-cards {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+    }
+
+    .vstats-card {
+      flex: 1;
+      min-width: 100px;
+      background: var(--accent-light);
+      border-radius: 8px;
+      padding: 12px 16px;
+      text-align: center;
+    }
+
+    .vstats-number {
+      font-size: 1.6rem;
+      font-weight: 500;
+      color: var(--accent);
+      line-height: 1;
+    }
+
+    .vstats-label {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 4px;
+    }
+
+    .vstats-chart-title {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .vstats-chart {
+      display: flex;
+      align-items: flex-end;
+      gap: 6px;
+      height: 80px;
+    }
+
+    .vstats-bar-col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      height: 100%;
+      justify-content: flex-end;
+    }
+
+    .vstats-bar {
+      width: 100%;
+      background: var(--accent);
+      border-radius: 3px 3px 0 0;
+      opacity: 0.7;
+      min-height: 2px;
+      transition: height 0.3s ease;
+    }
+
+    .vstats-bar-label {
+      font-size: 0.65rem;
+      color: var(--text-secondary);
+      text-align: center;
+    }
+
+    .vstats-bar-count {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+    }
     .settings-panel {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -961,6 +1040,15 @@
         <span class="toggle-arrow" id="settings-arrow">▸</span>
       </div>
       <div id="settings-panel" class="settings-panel" style="display:none">
+        <p class="loading">加载中…</p>
+      </div>
+
+      <!-- 访客统计 -->
+      <div class="section-title section-toggle" id="vstats-toggle">
+        <span>访客统计</span>
+        <span class="toggle-arrow" id="vstats-arrow">▸</span>
+      </div>
+      <div id="vstats-panel" class="vstats-panel" style="display:none">
         <p class="loading">加载中…</p>
       </div>
 
