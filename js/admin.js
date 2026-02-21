@@ -276,26 +276,21 @@
   // ── 用户分组外层分页 ───────────────────────────────────────
   function renderPagination(totalPages) {
     if (totalPages <= 1) { paginationEl.innerHTML = ''; return; }
-    paginationEl.innerHTML = buildPageButtons(totalPages, currentPage, (page) => {
+    buildPageButtons(paginationEl, totalPages, currentPage, (page) => {
       currentPage = page;
       renderMessages();
       messageList.scrollIntoView({ behavior: 'smooth' });
     });
   }
 
-  // 通用分页按钮生成（< 1 2 ... 5 6 7 ... 99 > 样式）
-  function buildPageButtons(totalPages, cur, onClick) {
-    const pages = [];
+  // 通用分页按钮生成，直接填充到目标容器
+  function buildPageButtons(container, totalPages, cur, onClick) {
+    container.innerHTML = '';
 
-    // 计算要显示的页码
-    const showPages = new Set();
-    showPages.add(1);
-    showPages.add(totalPages);
+    const showPages = new Set([1, totalPages]);
     for (let i = Math.max(1, cur - 1); i <= Math.min(totalPages, cur + 1); i++) showPages.add(i);
-
     const sorted = [...showPages].sort((a, b) => a - b);
 
-    // 插入省略号
     const items = [];
     let prev = 0;
     for (const p of sorted) {
@@ -304,10 +299,6 @@
       prev = p;
     }
 
-    const container = document.createElement('div');
-    container.className = 'pagination';
-
-    // 上一页
     const prevBtn = document.createElement('button');
     prevBtn.className = 'page-btn page-arrow';
     prevBtn.textContent = '‹';
@@ -330,15 +321,12 @@
       }
     }
 
-    // 下一页
     const nextBtn = document.createElement('button');
     nextBtn.className = 'page-btn page-arrow';
     nextBtn.textContent = '›';
     nextBtn.disabled = cur === totalPages;
     nextBtn.addEventListener('click', () => onClick(cur + 1));
     container.appendChild(nextBtn);
-
-    return container.outerHTML;
   }
 
   // ── 渲染单个用户分组（折叠/展开 + 组内分页）──────────────
@@ -435,7 +423,7 @@
       const vid = el.dataset.vid;
       const cur = parseInt(el.dataset.cur);
       const total = parseInt(el.dataset.total);
-      el.innerHTML = buildPageButtons(total, cur, (page) => {
+      buildPageButtons(el, total, cur, (page) => {
         groupState[vid].page = page;
         renderMessages();
       });
