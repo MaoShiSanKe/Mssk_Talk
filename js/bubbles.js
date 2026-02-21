@@ -9,9 +9,10 @@ const Bubbles = (() => {
     { cls: 'bubble-lg', fontSize: '1rem',    pad: '10px 16px' },
   ];
 
-  const SPEED_MIN = 0.3;  // px/frame
-  const SPEED_MAX = 0.7;
-  const SCALE_DURATION = 8000;  // 大小渐变周期 ms
+  // 速度单位：px/ms，非常慢的漂移感
+  const SPEED_MIN = 0.025;
+  const SPEED_MAX = 0.055;
+  const SCALE_DURATION = 10000; // 大小呼吸周期 ms
 
   let container = null;
   let bubbles = [];
@@ -26,11 +27,10 @@ const Bubbles = (() => {
     container = document.getElementById('bubble-layer');
     if (!container) return;
     container.style.display = 'block';
+    document.body.classList.add('has-bubbles');
 
-    // 创建气泡 DOM
     msgs.forEach((msg, i) => {
-      const sizeIdx = i % SIZES.length;
-      const size = SIZES[sizeIdx];
+      const size = SIZES[i % SIZES.length];
 
       const el = document.createElement('div');
       el.className = `bubble ${size.cls}`;
@@ -39,28 +39,22 @@ const Bubbles = (() => {
       el.style.padding = size.pad;
       container.appendChild(el);
 
-      // 随机初始位置
-      const x = Math.random() * (window.innerWidth - 160);
-      const y = Math.random() * (window.innerHeight - 60);
-
-      // 随机速度方向
       const angle = Math.random() * Math.PI * 2;
       const speed = SPEED_MIN + Math.random() * (SPEED_MAX - SPEED_MIN);
-
-      // 大小呼吸：每个气泡错开相位
       const scalePhase = (i / msgs.length) * Math.PI * 2;
 
       bubbles.push({
         el,
-        x, y,
+        x: Math.random() * (window.innerWidth - 180),
+        y: Math.random() * (window.innerHeight - 60),
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
         scalePhase,
         paused: false,
-        w: 0, h: 0, // 实际宽高在首帧测量
+        w: 0,
+        h: 0,
       });
 
-      // 鼠标悬停暂停
       el.addEventListener('mouseenter', () => {
         const b = bubbles.find(b => b.el === el);
         if (b) b.paused = true;
@@ -73,7 +67,6 @@ const Bubbles = (() => {
       });
     });
 
-    // 首帧测量实际尺寸
     requestAnimationFrame(() => {
       bubbles.forEach(b => {
         const rect = b.el.getBoundingClientRect();
@@ -87,12 +80,12 @@ const Bubbles = (() => {
   }
 
   function tick(now) {
-    const dt = Math.min(now - lastTime, 32); // 最大32ms，防止切换标签后跳跃
+    const dt = Math.min(now - lastTime, 50);
     lastTime = now;
 
-    const W = window.innerWidth;
-    const H = window.innerHeight;
-    const t = now;
+    // 用 document 实际宽高，不用 window，避免触发滚动条
+    const W = document.documentElement.clientWidth;
+    const H = document.documentElement.clientHeight;
 
     bubbles.forEach(b => {
       if (b.paused) return;
@@ -100,14 +93,16 @@ const Bubbles = (() => {
       b.x += b.vx * dt;
       b.y += b.vy * dt;
 
-      // 边缘碰撞反弹
-      if (b.x < 0) { b.x = 0; b.vx = Math.abs(b.vx); }
-      if (b.y < 0) { b.y = 0; b.vy = Math.abs(b.vy); }
-      if (b.x + b.w > W) { b.x = W - b.w; b.vx = -Math.abs(b.vx); }
-      if (b.y + b.h > H) { b.y = H - b.h; b.vy = -Math.abs(b.vy); }
+      // 边缘反弹，严格限制在可视区内
+      if (b.x < 0)        { b.x = 0;        b.vx =  Math.abs(b.vx); }
+      if (b.y < 0)        { b.y = 0;        b.vy =  Math.abs(b.vy); }
+      if (b.x + b.w > W) { b.x = W - b.w;  b.vx = -Math.abs(b.vx); }
+      if (b.y + b.h > H) { b.y = H - b.h;  b.vy = -Math.abs(b.vy); }
 
-      // 大小呼吸：0.85 ~ 1.1
-      const scale = 0.85 + 0.25 * (0.5 + 0.5 * Math.sin((t / SCALE_DURATION * Math.PI * 2) + b.scalePhase));
+      // 大小呼吸：0.88 ~ 1.08，幅度更小更自然
+      const scale = 0.88 + 0.20 * (0.5 + 0.5 * Math.sin(
+        (now / SCALE_DURATION * Math.PI * 2) + b.scalePhase
+      ));
 
       b.el.style.transform = `translate(${b.x}px, ${b.y}px) scale(${scale.toFixed(3)})`;
     });

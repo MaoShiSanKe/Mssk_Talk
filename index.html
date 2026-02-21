@@ -40,7 +40,20 @@
       --shadow: 0 2px 12px rgba(0,0,0,0.3);
     }
 
-    /* 漂浮留言墙 */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Noto Sans SC', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 16px 80px;
+    }
+
+    /* --- 新增：漂浮留言墙功能样式 --- */
     #bubble-layer {
       position: fixed;
       top: 0;
@@ -75,33 +88,23 @@
 
     .bubble-hover {
       opacity: 0.9 !important;
-      z-index: 1;
+      z-index: 2;
       white-space: normal;
       max-width: 240px;
       cursor: text;
     }
 
-    /* 确保主内容在气泡层上方，不改变原有布局 */
-    header, .card, footer { z-index: 1; }
-
-    html { overflow: hidden; }
-
-    body {
-      font-family: 'Noto Sans SC', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 48px 16px 80px;
-      overflow-y: auto;
+    body.has-bubbles .card {
+      box-shadow: var(--shadow);
     }
+    /* ------------------------------ */
 
     /* 顶部 */
     header {
       text-align: center;
       margin-bottom: 40px;
+      position: relative; /* 确保在气泡层之上 */
+      z-index: 1;
     }
 
     header h1 {
@@ -128,6 +131,8 @@
       padding: 32px;
       width: 100%;
       max-width: 560px;
+      position: relative; /* 确保在气泡层之上 */
+      z-index: 1;
     }
 
     /* 表单 */
@@ -386,18 +391,18 @@
 </head>
 <body>
 
-  <!-- 漂浮留言墙背景层（showFeatured 开启时显示） -->
-<div id="bubble-layer" style="display:none"></div>
+  <div id="bubble-layer" style="display:none"></div>
 
-<header>
+  <header>
     <h1 data-i18n="site.title">留言给我</h1>
     <p data-i18n="site.description">你的消息会以匿名方式送达，联系方式完全可选。</p>
   </header>
 
   <div class="card">
     <form id="message-form" autocomplete="off">
-      <!-- Honeypot：人不会看到，机器人会填，服务端检测到有值则拦截 -->
-      <input type="text" id="_hp" name="_hp" style="display:none;position:absolute;left:-9999px;" tabindex="-1" autocomplete="off">
+      <input type="text" id="_hp" name="_hp" aria-hidden="true" tabindex="-1" autocomplete="off"
+        style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;">
+      
       <div class="form-group">
         <textarea
           id="message-content"
@@ -448,7 +453,7 @@
     </div>
   </div>
 
-  <footer style="text-align:center;padding:32px 16px 16px;font-size:0.78rem;display:flex;align-items:center;justify-content:center;gap:16px;">
+  <footer style="position:relative;z-index:1;text-align:center;padding:32px 16px 16px;font-size:0.78rem;display:flex;align-items:center;justify-content:center;gap:16px;">
     <a href="https://github.com/MaoShiSanKe/Mssk_Talk" target="_blank" rel="noopener"
       style="color:var(--text-secondary);text-decoration:none;">Mssk_Talk on GitHub</a>
     <button id="lang-toggle" style="background:none;border:none;cursor:pointer;font-size:0.78rem;color:var(--text-secondary);padding:0;font-family:inherit;" title="Switch language">EN</button>
