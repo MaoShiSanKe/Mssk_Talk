@@ -104,8 +104,8 @@ const DB = (() => {
     return data.data;
   }
 
-  async function adminGetAllMessages({ unreadOnly = false, showBlocked = false } = {}) {
-    return _adminCall('getMessages', { unreadOnly, showBlocked });
+  async function adminGetAllMessages({ unreadOnly = false, showBlocked = false, showWordBlocked = false } = {}) {
+    return _adminCall('getMessages', { unreadOnly, showBlocked, showWordBlocked });
   }
 
   async function adminGetStats() {
@@ -149,6 +149,22 @@ const DB = (() => {
     return _get(`replies?message_id=eq.${messageId}&order=created_at.asc`);
   }
 
+  async function adminGetBlockedWords() {
+    return _adminCall('getBlockedWords');
+  }
+
+  async function adminAddBlockedWord(word) {
+    return _adminCall('addBlockedWord', { word });
+  }
+
+  async function adminDeleteBlockedWord(wordId) {
+    return _adminCall('deleteBlockedWord', { wordId });
+  }
+
+  async function adminReleaseWordBlocked(messageId) {
+    return _adminCall('releaseWordBlocked', { messageId });
+  }
+
   async function adminSetPinned(messageId, pinned) {
     return _adminCall('setPinned', { messageId, pinned });
   }
@@ -180,6 +196,7 @@ const DB = (() => {
     adminMarkRead, adminBlockVisitor, adminBlockMessage, adminSaveNote,
     adminGetReplies, adminAddReply, adminEditReply, adminDeleteReply,
     adminSetPinned, adminSetFeatured, adminGetFeaturedMessages,
+    adminGetBlockedWords, adminAddBlockedWord, adminDeleteBlockedWord, adminReleaseWordBlocked,
     adminGetSettings, adminSaveSetting,
   };
 })();

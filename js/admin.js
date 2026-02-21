@@ -26,6 +26,7 @@
   // ── 状态 ───────────────────────────────────────────────────
   let showUnreadOnly = false;
   let showBlocked = false;
+  let showWordBlocked = false;
   let searchKeyword = '';
   let currentPage = 1;
   const PAGE_SIZE = 10;       // 用户分组分页
@@ -107,9 +108,24 @@
 
   document.getElementById('filter-blocked').addEventListener('click', () => {
     showBlocked = !showBlocked;
+    if (showBlocked) showWordBlocked = false; // 互斥
     const btn = document.getElementById('filter-blocked');
     btn.classList.toggle('active', showBlocked);
     btn.textContent = showBlocked ? '隐藏已屏蔽' : '显示已屏蔽';
+    document.getElementById('filter-word-blocked').classList.remove('active');
+    document.getElementById('filter-word-blocked').textContent = '屏蔽词拦截';
+    currentPage = 1;
+    fetchAndRender();
+  });
+
+  document.getElementById('filter-word-blocked').addEventListener('click', () => {
+    showWordBlocked = !showWordBlocked;
+    if (showWordBlocked) showBlocked = false; // 互斥
+    const btn = document.getElementById('filter-word-blocked');
+    btn.classList.toggle('active', showWordBlocked);
+    btn.textContent = showWordBlocked ? '隐藏屏蔽词' : '屏蔽词拦截';
+    document.getElementById('filter-blocked').classList.remove('active');
+    document.getElementById('filter-blocked').textContent = '显示已屏蔽';
     currentPage = 1;
     fetchAndRender();
   });
@@ -123,6 +139,68 @@
       currentPage = 1;
       renderMessages();
     }, 300);
+  });
+
+  // ── 屏蔽词管理面板 ─────────────────────────────────────────
+  let bwordsLoaded = false;
+  document.getElementById('bwords-toggle').addEventListener('click', () => {
+    const panel = document.getElementById('bwords-panel');
+    const arrow = document.getElementById('bwords-arrow');
+    const isHidden = panel.style.display === 'none';
+    panel.style.display = isHidden ? 'block' : 'none';
+    arrow.textContent = isHidden ? '▾' : '▸';
+    if (isHidden && !bwordsLoaded) {
+      bwordsLoaded = true;
+      loadBlockedWords();
+    }
+  });
+
+  async function loadBlockedWords() {
+    const list = document.getElementById('bwords-list');
+    try {
+      const words = await DB.adminGetBlockedWords();
+      renderBlockedWords(words);
+    } catch {
+      list.innerHTML = '<p class="empty">加载失败</p>';
+    }
+  }
+
+  function renderBlockedWords(words) {
+    const list = document.getElementById('bwords-list');
+    if (!words.length) {
+      list.innerHTML = '<p class="empty" style="font-size:0.82rem;">暂无屏蔽词</p>';
+      return;
+    }
+    list.innerHTML = words.map(w => `
+      <span class="bword-tag">
+        ${escapeHtml(w.word)}
+        <button class="bword-del" data-word-id="${w.id}" title="删除">×</button>
+      </span>
+    `).join('');
+    list.querySelectorAll('.bword-del').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await DB.adminDeleteBlockedWord(btn.dataset.wordId);
+        await loadBlockedWords();
+      });
+    });
+  }
+
+  const bwordInput = document.getElementById('bword-input');
+  const bwordAddBtn = document.getElementById('bword-add-btn');
+
+  async function addBlockedWord() {
+    const word = bwordInput.value.trim();
+    if (!word) return;
+    bwordAddBtn.disabled = true;
+    await DB.adminAddBlockedWord(word);
+    bwordInput.value = '';
+    bwordAddBtn.disabled = false;
+    await loadBlockedWords();
+  }
+
+  bwordAddBtn.addEventListener('click', addBlockedWord);
+  bwordInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); addBlockedWord(); }
   });
 
   // ── 访客统计面板 ───────────────────────────────────────────
@@ -343,7 +421,7 @@
     messageList.innerHTML = `<p class="loading">${I18n.t('admin.loading')}</p>`;
     paginationEl.innerHTML = '';
     try {
-      allMessages = await DB.adminGetAllMessages({ unreadOnly: showUnreadOnly, showBlocked });
+      allMessages = await DB.adminGetAllMessages({ unreadOnly: showUnreadOnly, showBlocked, showWordBlocked });
       renderMessages();
     } catch (e) {
       messageList.innerHTML = `<p class="empty">加载失败：${e.message}</p>`;
@@ -516,9 +594,11 @@
 
   function renderMessage(m) {
     const hasReplies = m.replies && m.replies.length > 0;
+    const isWordBlocked = m.is_word_blocked;
     return `
-    <div class="message-item ${m.is_read ? '' : 'unread'} ${m.is_blocked ? 'msg-blocked' : ''}" data-msg-id="${m.id}">
+    <div class="message-item ${m.is_read ? '' : 'unread'} ${m.is_blocked ? 'msg-blocked' : ''} ${isWordBlocked ? 'msg-word-blocked' : ''}" data-msg-id="${m.id}">
       ${m.is_blocked ? '<span class="blocked-badge">已屏蔽</span>' : ''}
+      ${isWordBlocked ? '<span class="word-blocked-badge">🚫 屏蔽词</span>' : ''}
       <p class="msg-content">${escapeHtml(m.content)}</p>
       ${m.image_url ? `<a href="${escapeHtml(m.image_url)}" target="_blank" class="msg-img-link">🖼 查看图片</a>` : ''}
       ${m.contact ? `<p class="msg-contact">📬 ${I18n.t('admin.contact')}：${escapeHtml(m.contact)}</p>` : ''}
@@ -527,6 +607,9 @@
         <div class="msg-actions">
           ${hasReplies ? `<span class="badge replied">💬 已回复</span>` : ''}
           ${!m.is_read ? `<button class="btn-read" data-msg-id="${m.id}">${I18n.t('admin.mark_read')}</button>` : ''}
+          ${isWordBlocked
+            ? `<button class="btn-release" data-msg-id="${m.id}">✅ 放行</button>`
+            : `
           <button class="btn-block-msg ${m.is_blocked ? 'unblock' : ''}" data-msg-id="${m.id}" data-blocked="${m.is_blocked}">
             ${m.is_blocked ? '解除屏蔽' : '屏蔽消息'}
           </button>
@@ -535,12 +618,12 @@
           </button>
           <button class="btn-pinned ${m.is_pinned ? 'on' : ''}" data-msg-id="${m.id}" data-pinned="${!!m.is_pinned}" title="置顶消息">
             ${m.is_pinned ? '📌 已置顶' : '📌 置顶'}
-          </button>
+          </button>`
+          }
           <button class="btn-reply-toggle" data-msg-id="${m.id}">💬 ${hasReplies ? '查看回复' : '回复'}</button>
         </div>
       </div>
 
-      <!-- 回复区域（懒加载） -->
       <div class="reply-area" id="reply-area-${m.id}" style="display:none">
         <div class="reply-list" id="reply-list-${m.id}"></div>
         <div class="reply-input-row">
@@ -654,6 +737,17 @@
         if (!groupState[vid]) groupState[vid] = { open: false, page: 1 };
         groupState[vid].open = !groupState[vid].open;
         renderMessages();
+      });
+    });
+
+    // 放行屏蔽词消息
+    document.querySelectorAll('.btn-release').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        btn.disabled = true;
+        btn.textContent = '放行中…';
+        await DB.adminReleaseWordBlocked(btn.dataset.msgId);
+        await fetchAndRender();
       });
     });
 

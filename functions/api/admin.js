@@ -169,12 +169,52 @@ export async function onRequestPost(context) {
         break;
       }
 
+      case 'getBlockedWords': {
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/blocked_words?select=id,word,created_at&order=created_at.desc`,
+          { headers }
+        );
+        result = await res.json();
+        break;
+      }
+
+      case 'addBlockedWord': {
+        const res = await fetch(`${supabaseUrl}/rest/v1/blocked_words`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({ word: payload.word.trim() }),
+        });
+        result = await res.json();
+        break;
+      }
+
+      case 'deleteBlockedWord': {
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/blocked_words?id=eq.${payload.wordId}`,
+          { method: 'DELETE', headers }
+        );
+        result = { deleted: res.ok };
+        break;
+      }
+
+      case 'releaseWordBlocked': {
+        // 放行：清除 is_word_blocked 标记，消息变为正常可见
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/messages?id=eq.${payload.messageId}`,
+          { method: 'PATCH', headers, body: JSON.stringify({ is_word_blocked: false }) }
+        );
+        result = await res.json();
+        break;
+      }
+
       case 'getMessages': {
         const params = new URLSearchParams({
           select: '*, visitors(is_blocked, note), replies(id)',
           order: 'created_at.desc',
           ...(payload?.unreadOnly ? { is_read: 'eq.false' } : {}),
           ...(payload?.showBlocked ? {} : { is_blocked: 'eq.false' }),
+          // 屏蔽词拦截的消息：只在专门过滤时显示，默认不显示
+          ...(payload?.showWordBlocked ? { is_word_blocked: 'eq.true' } : { is_word_blocked: 'eq.false' }),
         });
         const res = await fetch(`${supabaseUrl}/rest/v1/messages?${params}`, { headers });
         result = await res.json();

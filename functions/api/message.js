@@ -101,7 +101,23 @@ export async function onRequestPost(context) {
     }
   } catch { }
 
-  // ── 6. 写入消息 ─────────────────────────────────────────────
+  // ── 6. 屏蔽词检测 ───────────────────────────────────────────
+  let isWordBlocked = false;
+  try {
+    const wordsRes = await fetch(
+      `${supabaseUrl}/rest/v1/blocked_words?select=word`,
+      { headers }
+    );
+    const wordsData = await wordsRes.json();
+    if (Array.isArray(wordsData) && wordsData.length > 0) {
+      const lowerContent = content.trim().toLowerCase();
+      isWordBlocked = wordsData.some(({ word }) =>
+        lowerContent.includes(word.toLowerCase())
+      );
+    }
+  } catch { /* 查询失败则继续，不因屏蔽词服务出错影响正常用户 */ }
+
+  // ── 7. 写入消息 ─────────────────────────────────────────────
   try {
     const msgRes = await fetch(`${supabaseUrl}/rest/v1/messages`, {
       method: 'POST',
@@ -111,6 +127,7 @@ export async function onRequestPost(context) {
         content: content.trim(),
         image_url: imageUrl || null,
         contact: contact || null,
+        is_word_blocked: isWordBlocked,
       }),
     });
 
@@ -120,14 +137,15 @@ export async function onRequestPost(context) {
     record.lastSubmit = now;
     ipStore.set(ip, record);
 
-    // ── 7. 发送通知（不阻塞，失败不影响用户）──────────────────
-    // waitUntil 让通知在响应返回后继续执行
-    context.waitUntil(sendNotifications(env, {
-      content: content.trim(),
-      contact: contact || null,
-      imageUrl: imageUrl || null,
-      visitorId,
-    }));
+    // ── 8. 发送通知（仅正常消息通知，屏蔽词消息不通知）────────
+    if (!isWordBlocked) {
+      context.waitUntil(sendNotifications(env, {
+        content: content.trim(),
+        contact: contact || null,
+        imageUrl: imageUrl || null,
+        visitorId,
+      }));
+    }
 
     return json({ ok: true });
   } catch (e) {
