@@ -41,6 +41,40 @@
       --unread-bg: #1e1a2a;
     }
 
+    /* 冷色方案（蓝灰） */
+    [data-scheme="cool"] {
+      --bg: #f0f2f5;
+      --surface: #ffffff;
+      --border: #dde1e8;
+      --text: #1a1f2e;
+      --text-secondary: #5a6478;
+      --accent: #3a5a8a;
+      --accent-light: #e8f0fa;
+      --success: #2d6a4f;
+      --success-bg: #edf5f0;
+      --error: #8b2020;
+      --error-bg: #fdf0f0;
+      --blocked-bg: #fff5f5;
+      --unread-bg: #f0f5ff;
+      --shadow: 0 2px 12px rgba(30,50,100,0.08);
+    }
+
+    [data-scheme="cool"][data-theme="dark"] {
+      --bg: #0f1520;
+      --surface: #161e2e;
+      --border: #263048;
+      --text: #d8e0f0;
+      --text-secondary: #7a90b8;
+      --accent: #7aabdc;
+      --accent-light: #1a2438;
+      --success: #5a9a70;
+      --success-bg: #1a2a20;
+      --error: #c87a7a;
+      --error-bg: #2a1818;
+      --blocked-bg: #2a1e28;
+      --unread-bg: #1a2035;
+    }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -751,6 +785,7 @@
     <div class="topbar">
       <h1 data-i18n="admin.login_title">管理后台</h1>
       <div style="display:flex;align-items:center;gap:8px;">
+        <button class="scheme-toggle" style="background:none;border:1px solid var(--border);border-radius:12px;cursor:pointer;font-size:0.78rem;padding:4px 10px;color:var(--text-secondary);font-family:inherit;" title="切换配色方案">🔵 冷色</button>
         <button class="theme-toggle" style="background:none;border:none;cursor:pointer;font-size:1rem;padding:4px;" title="切换主题">🌙</button>
         <button id="logout-btn" data-i18n="admin.logout">退出</button>
       </div>
