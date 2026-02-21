@@ -205,6 +205,57 @@
     .export-btn:hover { border-color: var(--accent); color: var(--accent); }
     .export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+    .export-panel {
+      position: absolute;
+      right: 0;
+      top: calc(100% + 6px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      min-width: 220px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+      z-index: 100;
+    }
+
+    .export-panel-title {
+      font-size: 0.78rem;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+      font-weight: 500;
+    }
+
+    .export-radio, .export-check {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.85rem;
+      color: var(--text);
+      cursor: pointer;
+      padding: 4px 0;
+    }
+
+    .export-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 8px 0;
+    }
+
+    .export-confirm-btn {
+      width: 100%;
+      margin-top: 10px;
+      padding: 8px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .export-confirm-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
     .stat-card {
       flex: 1;
       background: var(--surface);
@@ -247,7 +298,16 @@
 
     .section-toggle:hover { color: var(--accent); }
 
-    /* 屏蔽词面板 */
+    mark.search-highlight {
+      background: #f5e642;
+      color: inherit;
+      border-radius: 2px;
+      padding: 0 1px;
+    }
+
+    [data-theme="dark"] mark.search-highlight {
+      background: #8a7a20;
+    }
     .bwords-panel {
       background: var(--surface);
       border: 1px solid var(--border);
@@ -1215,7 +1275,26 @@
           <button class="filter-btn" id="filter-word-blocked">屏蔽词拦截</button>
         </div>
         <input type="text" id="search-input" class="search-input" placeholder="搜索消息、联系方式、备注…">
-        <button id="export-btn" class="export-btn">导出 CSV</button>
+        <div style="position:relative;display:inline-block;">
+          <button id="export-btn" class="export-btn">导出 CSV ▾</button>
+          <div id="export-panel" class="export-panel" style="display:none">
+            <p class="export-panel-title">导出范围</p>
+            <label class="export-radio">
+              <input type="radio" name="export-scope" value="all" checked> 全部消息
+            </label>
+            <label class="export-radio">
+              <input type="radio" name="export-scope" value="current"> 当前视图（含搜索/过滤结果）
+            </label>
+            <div class="export-divider"></div>
+            <label class="export-check">
+              <input type="checkbox" id="export-include-blocked"> 包含手动屏蔽的消息
+            </label>
+            <label class="export-check">
+              <input type="checkbox" id="export-include-word-blocked"> 包含屏蔽词拦截的消息
+            </label>
+            <button id="export-confirm-btn" class="export-confirm-btn">确认导出</button>
+          </div>
+        </div>
       </div>
 
       <!-- 消息列表 -->

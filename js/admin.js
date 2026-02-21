@@ -347,30 +347,72 @@
   }
 
   // ── 数据导出 ───────────────────────────────────────────────
-  document.getElementById('export-btn').addEventListener('click', async () => {
-    const btn = document.getElementById('export-btn');
-    btn.disabled = true;
-    btn.textContent = '导出中…';
+  const exportBtn = document.getElementById('export-btn');
+  const exportPanel = document.getElementById('export-panel');
+
+  // 切换导出面板
+  exportBtn.addEventListener('click', () => {
+    const isHidden = exportPanel.style.display === 'none';
+    exportPanel.style.display = isHidden ? 'block' : 'none';
+  });
+
+  // 点击面板外关闭
+  document.addEventListener('click', e => {
+    if (!exportPanel.contains(e.target) && e.target !== exportBtn) {
+      exportPanel.style.display = 'none';
+    }
+  });
+
+  document.getElementById('export-confirm-btn').addEventListener('click', async () => {
+    const scope = document.querySelector('input[name="export-scope"]:checked')?.value ?? 'all';
+    const includeBlocked = document.getElementById('export-include-blocked').checked;
+    const includeWordBlocked = document.getElementById('export-include-word-blocked').checked;
+
+    const confirmBtn = document.getElementById('export-confirm-btn');
+    confirmBtn.disabled = true;
+    confirmBtn.textContent = '导出中…';
+
     try {
-      // 拉取全部消息（含已屏蔽）
-      const messages = await DB.adminGetAllMessages({ unreadOnly: false, showBlocked: true });
+      let messages = [];
+
+      if (scope === 'current') {
+        // 当前视图：使用已加载的 allMessages，再按条件过滤
+        messages = allMessages.filter(m => {
+          if (!includeBlocked && m.is_blocked) return false;
+          if (!includeWordBlocked && m.is_word_blocked) return false;
+          return true;
+        });
+      } else {
+        // 全部消息
+        const all = await DB.adminGetAllMessages({ showBlocked: true, showWordBlocked: false });
+        const wordBlocked = includeWordBlocked
+          ? await DB.adminGetAllMessages({ showBlocked: false, showWordBlocked: true })
+          : [];
+        messages = [
+          ...all.filter(m => includeBlocked || !m.is_blocked),
+          ...wordBlocked,
+        ];
+      }
+
       if (!messages.length) {
-        btn.textContent = '暂无数据';
-        setTimeout(() => { btn.textContent = '导出 CSV'; btn.disabled = false; }, 2000);
+        alert('没有符合条件的数据');
         return;
       }
+
+      const suffix = scope === 'current' && searchKeyword ? `_搜索_${searchKeyword}` : '';
       const csv = messagesToCsv(messages);
-      downloadCsv(csv, `mssk_messages_${dateStr()}.csv`);
+      downloadCsv(csv, `mssk_messages_${dateStr()}${suffix}.csv`);
+      exportPanel.style.display = 'none';
     } catch (e) {
       alert('导出失败：' + e.message);
     } finally {
-      btn.disabled = false;
-      btn.textContent = '导出 CSV';
+      confirmBtn.disabled = false;
+      confirmBtn.textContent = '确认导出';
     }
   });
 
   function messagesToCsv(messages) {
-    const cols = ['ID', '用户ID', '用户备注', '内容', '图片链接', '联系方式', '发送时间', '已读', '已屏蔽'];
+    const cols = ['ID', '用户ID', '用户备注', '内容', '图片链接', '联系方式', '发送时间', '已读', '已屏蔽', '屏蔽词拦截'];
     const escape = v => {
       if (v == null) return '';
       const s = String(v).replace(/"/g, '""');
@@ -386,8 +428,9 @@
       new Date(m.created_at).toLocaleString('zh-CN'),
       m.is_read ? '是' : '否',
       m.is_blocked ? '是' : '否',
+      m.is_word_blocked ? '是' : '否',
     ].map(escape).join(','));
-    return '\uFEFF' + [cols.join(','), ...rows].join('\r\n'); // BOM 确保 Excel 正确显示中文
+    return '\uFEFF' + [cols.join(','), ...rows].join('\r\n');
   }
 
   function downloadCsv(content, filename) {
@@ -535,7 +578,7 @@
     const state = groupState[vid];
 
     const displayName = note
-      ? `<span class="visitor-name">${escapeHtml(note)}</span><span class="visitor-id" title="${vid}">#${shortId}</span>`
+      ? `<span class="visitor-name">${highlightText(note, searchKeyword)}</span><span class="visitor-id" title="${vid}">#${shortId}</span>`
       : `<span class="visitor-id" title="${vid}">#${shortId}</span>`;
     const preview = messages[0];
     const previewText = preview?.content?.slice(0, 60) + (preview?.content?.length > 60 ? '…' : '');
@@ -568,7 +611,7 @@
       <!-- 最新一条消息作为预览（messages 已按 created_at desc 排序） -->
       ${!state.open ? `
       <div class="group-preview" data-vid="${vid}" style="cursor:pointer">
-        <span class="preview-text">${escapeHtml(previewText)}</span>
+        <span class="preview-text">${highlightText(previewText, searchKeyword)}</span>
         <span class="preview-time">${formatTime(preview?.created_at)}</span>
       </div>` : ''}
 
@@ -583,7 +626,7 @@
         </div>` : ''}
 
         <div class="message-thread">
-          ${pageMsgs.map(m => renderMessage(m)).join('')}
+          ${pageMsgs.map(m => renderMessage(m, searchKeyword)).join('')}
         </div>
 
         ${totalMsgPages > 1 ? `<div class="msg-pagination" data-vid="${vid}" data-cur="${state.page}" data-total="${totalMsgPages}"></div>` : ''}
@@ -599,9 +642,9 @@
     <div class="message-item ${m.is_read ? '' : 'unread'} ${m.is_blocked ? 'msg-blocked' : ''} ${isWordBlocked ? 'msg-word-blocked' : ''}" data-msg-id="${m.id}">
       ${m.is_blocked ? '<span class="blocked-badge">已屏蔽</span>' : ''}
       ${isWordBlocked ? '<span class="word-blocked-badge">🚫 屏蔽词</span>' : ''}
-      <p class="msg-content">${escapeHtml(m.content)}</p>
+      <p class="msg-content">${highlightText(m.content, searchKeyword)}</p>
       ${m.image_url ? `<a href="${escapeHtml(m.image_url)}" target="_blank" class="msg-img-link">🖼 查看图片</a>` : ''}
-      ${m.contact ? `<p class="msg-contact">📬 ${I18n.t('admin.contact')}：${escapeHtml(m.contact)}</p>` : ''}
+      ${m.contact ? `<p class="msg-contact">📬 ${I18n.t('admin.contact')}：${highlightText(m.contact, searchKeyword)}</p>` : ''}
       <div class="msg-footer">
         <span class="msg-time">${formatTime(m.created_at)}</span>
         <div class="msg-actions">
@@ -928,6 +971,18 @@
   function escapeAttr(str = '') {
     return str.replace(/"/g, '&quot;');
   }
+
+  // 搜索关键词高亮：先转义再包裹匹配词
+  function highlightText(str = '', keyword = '') {
+    const escaped = escapeHtml(str);
+    if (!keyword) return escaped;
+    const escapedKw = keyword.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return escaped.replace(
+      new RegExp(escapedKw.replace(/&amp;|&lt;|&gt;/g, m => escapeHtml(m)), 'gi'),
+      match => `<mark class="search-highlight">${match}</mark>`
+    );
+  }
+
   function formatTime(iso) {
     return new Date(iso).toLocaleString('zh-CN');
   }
