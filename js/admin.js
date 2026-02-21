@@ -468,13 +468,7 @@
       btn.addEventListener('click', e => {
         e.stopPropagation();
         const isBlocked = btn.dataset.blocked === 'true';
-        if (!isBlocked) {
-          showBlockConfirm(btn.dataset.vid);
-        } else {
-          DB.adminBlockVisitor(btn.dataset.vid, false, false).then(() => {
-            fetchAndRender(); loadStats();
-          });
-        }
+        showBlockConfirm(btn.dataset.vid, isBlocked);
       });
     });
 
@@ -511,32 +505,48 @@
   }
 
   // ── 屏蔽用户确认弹窗 ──────────────────────────────────────
-  function showBlockConfirm(visitorId) {
+  function showBlockConfirm(visitorId, isCurrentlyBlocked) {
     const existing = document.getElementById('block-confirm');
     if (existing) existing.remove();
 
     const dialog = document.createElement('div');
     dialog.id = 'block-confirm';
     dialog.className = 'confirm-dialog';
-    dialog.innerHTML = `
-      <div class="confirm-box">
-        <p class="confirm-title">屏蔽此用户</p>
-        <p class="confirm-desc">屏蔽后该用户无法再发送消息。</p>
-        <label class="confirm-check">
-          <input type="checkbox" id="block-msgs-check"> 同时屏蔽该用户所有历史消息
-        </label>
-        <div class="confirm-actions">
-          <button id="confirm-cancel">取消</button>
-          <button id="confirm-ok" class="danger">确认屏蔽</button>
-        </div>
-      </div>
-    `;
+
+    if (isCurrentlyBlocked) {
+      dialog.innerHTML = `
+        <div class="confirm-box">
+          <p class="confirm-title">解除屏蔽</p>
+          <p class="confirm-desc">解除后该用户可以重新发送消息。</p>
+          <label class="confirm-check">
+            <input type="checkbox" id="block-msgs-check" checked> 同时解除该用户所有消息屏蔽
+          </label>
+          <div class="confirm-actions">
+            <button id="confirm-cancel">取消</button>
+            <button id="confirm-ok">确认解除</button>
+          </div>
+        </div>`;
+    } else {
+      dialog.innerHTML = `
+        <div class="confirm-box">
+          <p class="confirm-title">屏蔽此用户</p>
+          <p class="confirm-desc">屏蔽后该用户无法再发送消息。</p>
+          <label class="confirm-check">
+            <input type="checkbox" id="block-msgs-check"> 同时屏蔽该用户所有历史消息
+          </label>
+          <div class="confirm-actions">
+            <button id="confirm-cancel">取消</button>
+            <button id="confirm-ok" class="danger">确认屏蔽</button>
+          </div>
+        </div>`;
+    }
+
     document.body.appendChild(dialog);
     document.getElementById('confirm-cancel').addEventListener('click', () => dialog.remove());
     document.getElementById('confirm-ok').addEventListener('click', async () => {
-      const blockMessages = document.getElementById('block-msgs-check').checked;
+      const syncMessages = document.getElementById('block-msgs-check').checked;
       dialog.remove();
-      await DB.adminBlockVisitor(visitorId, true, blockMessages);
+      await DB.adminBlockVisitor(visitorId, !isCurrentlyBlocked, syncMessages);
       await fetchAndRender();
       loadStats();
     });

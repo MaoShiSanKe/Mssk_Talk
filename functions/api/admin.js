@@ -87,14 +87,13 @@ export async function onRequestPost(context) {
       }
 
       case 'blockVisitor': {
-        // 屏蔽/解除屏蔽用户
         const res = await fetch(
           `${supabaseUrl}/rest/v1/visitors?id=eq.${payload.visitorId}`,
           { method: 'PATCH', headers, body: JSON.stringify({ is_blocked: payload.block }) }
         );
         result = await res.json();
-        // 如果选择同时屏蔽该用户所有消息
-        if (payload.blockMessages) {
+        // 屏蔽或解除时，如果选择同步操作消息
+        if (payload.blockMessages !== undefined) {
           await fetch(
             `${supabaseUrl}/rest/v1/messages?visitor_id=eq.${payload.visitorId}`,
             { method: 'PATCH', headers, body: JSON.stringify({ is_blocked: payload.block }) }

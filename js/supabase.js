@@ -108,8 +108,8 @@ const DB = (() => {
     return _adminCall('markRead', { messageId });
   }
 
-  async function adminBlockVisitor(visitorId, block = true, blockMessages = false) {
-    return _adminCall('blockVisitor', { visitorId, block, blockMessages });
+  async function adminBlockVisitor(visitorId, block = true, syncMessages = false) {
+    return _adminCall('blockVisitor', { visitorId, block, blockMessages: syncMessages ? block : undefined });
   }
 
   async function adminBlockMessage(messageId, block = true) {
