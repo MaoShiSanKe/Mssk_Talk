@@ -148,11 +148,36 @@
     }
 
     /* 统计栏 */
+    .stats-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
     .stats {
       display: flex;
       gap: 12px;
-      margin-bottom: 24px;
+      flex: 1;
     }
+
+    .export-btn {
+      padding: 7px 16px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: var(--surface);
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      font-family: inherit;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .export-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .export-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .stat-card {
       flex: 1;
@@ -742,19 +767,22 @@
     <div class="main-content">
 
       <!-- 统计 -->
-      <div class="stats">
-        <div class="stat-card">
-          <div class="number" id="stat-total">—</div>
-          <div class="label" data-i18n="admin.stats_total">总消息</div>
+      <div class="stats-header">
+        <div class="stats">
+          <div class="stat-card">
+            <div class="number" id="stat-total">—</div>
+            <div class="label" data-i18n="admin.stats_total">总消息</div>
+          </div>
+          <div class="stat-card">
+            <div class="number" id="stat-unread">—</div>
+            <div class="label" data-i18n="admin.stats_unread">未读</div>
+          </div>
+          <div class="stat-card">
+            <div class="number" id="stat-visitors">—</div>
+            <div class="label" data-i18n="admin.stats_visitors">用户数</div>
+          </div>
         </div>
-        <div class="stat-card">
-          <div class="number" id="stat-unread">—</div>
-          <div class="label" data-i18n="admin.stats_unread">未读</div>
-        </div>
-        <div class="stat-card">
-          <div class="number" id="stat-visitors">—</div>
-          <div class="label" data-i18n="admin.stats_visitors">用户数</div>
-        </div>
+        <button id="export-btn" class="export-btn">导出 CSV</button>
       </div>
 
       <!-- 设置面板 -->

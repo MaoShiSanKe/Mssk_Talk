@@ -213,6 +213,64 @@
     });
   }
 
+  // ── 数据导出 ───────────────────────────────────────────────
+  document.getElementById('export-btn').addEventListener('click', async () => {
+    const btn = document.getElementById('export-btn');
+    btn.disabled = true;
+    btn.textContent = '导出中…';
+    try {
+      // 拉取全部消息（含已屏蔽）
+      const messages = await DB.adminGetAllMessages({ unreadOnly: false, showBlocked: true });
+      if (!messages.length) {
+        btn.textContent = '暂无数据';
+        setTimeout(() => { btn.textContent = '导出 CSV'; btn.disabled = false; }, 2000);
+        return;
+      }
+      const csv = messagesToCsv(messages);
+      downloadCsv(csv, `mssk_messages_${dateStr()}.csv`);
+    } catch (e) {
+      alert('导出失败：' + e.message);
+    } finally {
+      btn.disabled = false;
+      btn.textContent = '导出 CSV';
+    }
+  });
+
+  function messagesToCsv(messages) {
+    const cols = ['ID', '用户ID', '用户备注', '内容', '图片链接', '联系方式', '发送时间', '已读', '已屏蔽'];
+    const escape = v => {
+      if (v == null) return '';
+      const s = String(v).replace(/"/g, '""');
+      return /[,"\n\r]/.test(s) ? `"${s}"` : s;
+    };
+    const rows = messages.map(m => [
+      m.id,
+      m.visitor_id,
+      m.visitors?.note ?? '',
+      m.content,
+      m.image_url ?? '',
+      m.contact ?? '',
+      new Date(m.created_at).toLocaleString('zh-CN'),
+      m.is_read ? '是' : '否',
+      m.is_blocked ? '是' : '否',
+    ].map(escape).join(','));
+    return '\uFEFF' + [cols.join(','), ...rows].join('\r\n'); // BOM 确保 Excel 正确显示中文
+  }
+
+  function downloadCsv(content, filename) {
+    const blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  function dateStr() {
+    return new Date().toISOString().slice(0, 10);
+  }
+
   // ── 统计 ───────────────────────────────────────────────────
   async function loadStats() {
     try {
