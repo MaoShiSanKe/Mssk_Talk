@@ -128,6 +128,23 @@ const DB = (() => {
     return _adminCall('saveNote', { visitorId, note });
   }
 
+  async function adminGetReplies(messageId) {
+    return _adminCall('getReplies', { messageId });
+  }
+
+  async function adminAddReply(messageId, content, contact, originalContent) {
+    return _adminCall('addReply', { messageId, content, contact, originalContent });
+  }
+
+  async function adminDeleteReply(replyId) {
+    return _adminCall('deleteReply', { replyId });
+  }
+
+  // 用户端：获取某条消息的回复（用公开 key）
+  async function getReplies(messageId) {
+    return _get(`replies?message_id=eq.${messageId}&order=created_at.asc`);
+  }
+
   async function adminGetSettings() {
     return _adminCall('getSettings');
   }
@@ -138,9 +155,10 @@ const DB = (() => {
 
   return {
     createVisitor, getVisitor, isBlocked,
-    sendMessage, getMyMessages,
+    sendMessage, getMyMessages, getReplies,
     adminGetAllMessages, adminGetStats,
     adminMarkRead, adminBlockVisitor, adminBlockMessage, adminSaveNote,
+    adminGetReplies, adminAddReply, adminDeleteReply,
     adminGetSettings, adminSaveSetting,
   };
 })();

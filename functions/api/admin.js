@@ -35,6 +35,48 @@ export async function onRequestPost(context) {
     let result;
 
     switch (action) {
+      case 'getReplies': {
+        // 获取某条消息的所有回复
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/replies?message_id=eq.${payload.messageId}&order=created_at.asc`,
+          { headers }
+        );
+        result = await res.json();
+        break;
+      }
+
+      case 'addReply': {
+        const res = await fetch(`${supabaseUrl}/rest/v1/replies`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            message_id: payload.messageId,
+            content: payload.content,
+          }),
+        });
+        result = await res.json();
+        // 同时把原消息标为已读
+        await fetch(
+          `${supabaseUrl}/rest/v1/messages?id=eq.${payload.messageId}`,
+          { method: 'PATCH', headers, body: JSON.stringify({ is_read: true }) }
+        );
+        // 如果有联系邮件且通知配置存在，发邮件通知用户
+        if (payload.contact && payload.contact.includes('@') &&
+            env.NOTIFY_RESEND_KEY && env.NOTIFY_EMAIL_FROM) {
+          await notifyUserReply(env, payload.contact, payload.content, payload.originalContent);
+        }
+        break;
+      }
+
+      case 'deleteReply': {
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/replies?id=eq.${payload.replyId}`,
+          { method: 'DELETE', headers }
+        );
+        result = { deleted: res.ok };
+        break;
+      }
+
       case 'getSettings': {
         const res = await fetch(`${supabaseUrl}/rest/v1/settings?select=key,value,description&order=key`, { headers });
         result = await res.json();
@@ -129,6 +171,36 @@ export async function onRequestPost(context) {
   } catch (e) {
     return json({ error: e.message }, 500);
   }
+}
+
+// 回复通知：发邮件告知用户
+async function notifyUserReply(env, toEmail, replyContent, originalContent) {
+  try {
+    await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${env.NOTIFY_RESEND_KEY}`,
+      },
+      body: JSON.stringify({
+        from: env.NOTIFY_EMAIL_FROM,
+        to: toEmail,
+        subject: '你的留言收到了回复',
+        html: `
+          <div style="font-family:sans-serif;max-width:600px;margin:0 auto;padding:24px;">
+            <h2 style="color:#5c4a3a;">你的留言收到了回复</h2>
+            <div style="background:#f7f5f0;border-radius:8px;padding:16px;margin:16px 0;color:#8a8078;font-size:0.9em;">
+              <p style="margin:0;white-space:pre-wrap;">${originalContent}</p>
+            </div>
+            <p style="margin-bottom:8px;font-weight:500;">回复：</p>
+            <div style="background:#fff;border-left:3px solid #5c4a3a;padding:16px;border-radius:0 8px 8px 0;">
+              <p style="margin:0;white-space:pre-wrap;">${replyContent}</p>
+            </div>
+          </div>
+        `,
+      }),
+    });
+  } catch { /* 通知失败不影响主流程 */ }
 }
 
 function json(data, status = 200) {

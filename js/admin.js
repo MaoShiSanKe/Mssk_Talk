@@ -473,9 +473,54 @@
           <button class="btn-block-msg ${m.is_blocked ? 'unblock' : ''}" data-msg-id="${m.id}" data-blocked="${m.is_blocked}">
             ${m.is_blocked ? '解除屏蔽' : '屏蔽消息'}
           </button>
+          <button class="btn-reply-toggle" data-msg-id="${m.id}">💬 回复</button>
+        </div>
+      </div>
+
+      <!-- 回复区域（懒加载） -->
+      <div class="reply-area" id="reply-area-${m.id}" style="display:none">
+        <div class="reply-list" id="reply-list-${m.id}">
+          <p class="loading" style="font-size:0.8rem;">加载中…</p>
+        </div>
+        <div class="reply-input-row">
+          <textarea class="reply-input" id="reply-input-${m.id}"
+            placeholder="输入回复内容…" rows="2"></textarea>
+          <button class="btn-send-reply" data-msg-id="${m.id}"
+            data-contact="${escapeAttr(m.contact ?? '')}"
+            data-original="${escapeAttr(m.content)}">发送</button>
         </div>
       </div>
     </div>`;
+  }
+
+  function renderReplyList(msgId, replies) {
+    const el = document.getElementById(`reply-list-${msgId}`);
+    if (!el) return;
+    if (!replies.length) {
+      el.innerHTML = '<p class="empty" style="font-size:0.8rem;">暂无回复</p>';
+      return;
+    }
+    el.innerHTML = replies.map(r => `
+      <div class="reply-item" data-reply-id="${r.id}">
+        <p class="reply-content">${escapeHtml(r.content)}</p>
+        <div class="reply-footer">
+          <span class="reply-time">${formatTime(r.created_at)}</span>
+          <button class="btn-delete-reply" data-reply-id="${r.id}" data-msg-id="${msgId}">删除</button>
+        </div>
+      </div>
+    `).join('');
+    // 绑定删除
+    el.querySelectorAll('.btn-delete-reply').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        await DB.adminDeleteReply(btn.dataset.replyId);
+        await loadReplies(btn.dataset.msgId);
+      });
+    });
+  }
+
+  async function loadReplies(msgId) {
+    const replies = await DB.adminGetReplies(msgId);
+    renderReplyList(msgId, replies);
   }
 
   // ── 事件绑定 ───────────────────────────────────────────────
@@ -500,7 +545,40 @@
       });
     });
 
-    // 标为已读
+    // 回复切换
+    document.querySelectorAll('.btn-reply-toggle').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        const msgId = btn.dataset.msgId;
+        const area = document.getElementById(`reply-area-${msgId}`);
+        const isHidden = area.style.display === 'none';
+        area.style.display = isHidden ? 'block' : 'none';
+        btn.textContent = isHidden ? '💬 收起' : '💬 回复';
+        if (isHidden) loadReplies(msgId);
+      });
+    });
+
+    // 发送回复
+    document.querySelectorAll('.btn-send-reply').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        const msgId = btn.dataset.msgId;
+        const input = document.getElementById(`reply-input-${msgId}`);
+        const content = input.value.trim();
+        if (!content) return;
+        btn.disabled = true;
+        btn.textContent = '发送中…';
+        await DB.adminAddReply(msgId, content, btn.dataset.contact, btn.dataset.original);
+        input.value = '';
+        btn.disabled = false;
+        btn.textContent = '发送';
+        // 同步更新本地已读状态
+        const msg = allMessages.find(m => m.id === msgId);
+        if (msg) msg.is_read = true;
+        await loadReplies(msgId);
+        loadStats();
+      });
+    });
     document.querySelectorAll('.btn-read').forEach(btn => {
       btn.addEventListener('click', async e => {
         e.stopPropagation();

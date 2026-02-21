@@ -189,8 +189,27 @@
           <p class="history-content">${escapeHtml(m.content)}</p>
           ${m.image_url ? `<a href="${escapeHtml(m.image_url)}" target="_blank" class="history-img-link">查看图片</a>` : ''}
           <span class="history-time">${formatTime(m.created_at)}</span>
+          <div class="history-replies" id="history-replies-${m.id}">
+            <p class="loading" style="font-size:0.78rem;">加载回复…</p>
+          </div>
         </div>
       `).join('');
+      // 并行加载每条消息的回复
+      messages.forEach(async m => {
+        try {
+          const replies = await DB.getReplies(m.id);
+          const el = document.getElementById(`history-replies-${m.id}`);
+          if (!el) return;
+          if (!replies.length) { el.innerHTML = ''; return; }
+          el.innerHTML = replies.map(r => `
+            <div class="history-reply">
+              <span class="history-reply-label">回复</span>
+              <p class="history-reply-content">${escapeHtml(r.content)}</p>
+              <span class="history-reply-time">${formatTime(r.created_at)}</span>
+            </div>
+          `).join('');
+        } catch { document.getElementById(`history-replies-${m.id}`)?.remove(); }
+      });
     } catch {
       historyList.innerHTML = `<p class="empty">${I18n.t('feedback.error_body')}</p>`;
     }
