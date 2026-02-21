@@ -278,6 +278,8 @@
       document.getElementById('stat-total').textContent = stats.total;
       document.getElementById('stat-unread').textContent = stats.unread;
       document.getElementById('stat-visitors').textContent = stats.visitors;
+      // 未读角标
+      document.title = stats.unread > 0 ? `(${stats.unread}) 管理后台` : '管理后台';
     } catch (e) { console.error(e); }
   }
 

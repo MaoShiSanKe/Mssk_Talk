@@ -6,7 +6,7 @@
 const I18n = (() => {
   const LANGS = {
     zh: './i18n/zh.json',
-    // en: './i18n/en.json',  // 未来扩展示例
+    en: './i18n/en.json',
   };
 
   let _strings = {};

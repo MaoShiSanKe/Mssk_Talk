@@ -1,0 +1,57 @@
+{
+  "site": {
+    "title": "Leave a Message",
+    "subtitle": "Got something to say? Write it down.",
+    "description": "Your message is delivered anonymously. Contact info is completely optional."
+  },
+  "form": {
+    "message_placeholder": "Write what's on your mind…",
+    "image_url_label": "Image link (optional)",
+    "image_url_placeholder": "https://your-image-host.com/image.jpg",
+    "image_url_tip": "Upload your image to an image host first, then paste the link",
+    "contact_label": "Contact info (optional)",
+    "contact_placeholder": "Email, Twitter, anything you like…",
+    "submit": "Send Message",
+    "submitting": "Sending…"
+  },
+  "feedback": {
+    "success_title": "Delivered",
+    "success_body": "Thanks for your message. I'll check it periodically.",
+    "error_title": "Failed to send",
+    "error_body": "Please try again later.",
+    "blocked": "Unable to send message.",
+    "message_required": "Please write something before sending.",
+    "send_another": "Send another"
+  },
+  "history": {
+    "title": "Your message history",
+    "empty": "No messages yet.",
+    "toggle_show": "View history",
+    "toggle_hide": "Hide history"
+  },
+  "admin": {
+    "login_title": "Admin Panel",
+    "password_placeholder": "Enter password",
+    "login_btn": "Login",
+    "login_error": "Incorrect password",
+    "logout": "Logout",
+    "all_messages": "All",
+    "unread_only": "Unread",
+    "mark_read": "Mark read",
+    "block_user": "Block",
+    "unblock_user": "Unblock",
+    "add_note": "Add note",
+    "note_placeholder": "Note about this user…",
+    "save_note": "Save",
+    "no_messages": "No messages",
+    "visitor_id": "User",
+    "contact": "Contact",
+    "image": "Image",
+    "blocked_badge": "Blocked",
+    "unread_badge": "Unread",
+    "loading": "Loading…",
+    "stats_total": "Total",
+    "stats_unread": "Unread",
+    "stats_visitors": "Visitors"
+  }
+}

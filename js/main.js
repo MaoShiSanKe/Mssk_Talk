@@ -38,6 +38,19 @@
   const charCount = document.getElementById('char-count');
   const honeypotInput = document.getElementById('_hp'); // 隐藏的防机器人字段
 
+  // ── 语言切换 ───────────────────────────────────────────────
+  const langToggle = document.getElementById('lang-toggle');
+  if (langToggle) {
+    langToggle.textContent = savedLang === 'zh' ? 'EN' : '中';
+    langToggle.addEventListener('click', async () => {
+      const next = I18n.currentLang() === 'zh' ? 'en' : 'zh';
+      await I18n.load(next);
+      langToggle.textContent = next === 'zh' ? 'EN' : '中';
+      // 字数统计文字也要更新
+      charCount.textContent = `${textarea.value.length} / ${MAX_CHARS}`;
+    });
+  }
+
   // ── 提交间隔限制 ───────────────────────────────────────────
   let lastSubmitTime = 0;
   const MIN_INTERVAL = 2000;
