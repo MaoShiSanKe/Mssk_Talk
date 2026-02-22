@@ -141,6 +141,51 @@
     }, 300);
   });
 
+  // ── 精选管理面板 ───────────────────────────────────────────
+  let featuredMgrLoaded = false;
+  document.getElementById('featured-mgr-toggle').addEventListener('click', () => {
+    const panel = document.getElementById('featured-mgr-panel');
+    const arrow = document.getElementById('featured-mgr-arrow');
+    const isHidden = panel.style.display === 'none';
+    panel.style.display = isHidden ? 'block' : 'none';
+    arrow.textContent = isHidden ? '▾' : '▸';
+    if (isHidden) loadFeaturedMgr(); // 每次展开刷新，保持最新状态
+  });
+
+  async function loadFeaturedMgr() {
+    const list = document.getElementById('featured-mgr-list');
+    list.innerHTML = '<p class="loading">加载中…</p>';
+    try {
+      const messages = await DB.adminGetFeaturedMessages();
+      if (!messages.length) {
+        list.innerHTML = '<p class="empty" style="font-size:0.85rem;">暂无精选留言</p>';
+        return;
+      }
+      list.innerHTML = messages.map(m => `
+        <div class="featured-mgr-item" data-msg-id="${m.id}">
+          <div class="featured-mgr-body">
+            <p class="featured-mgr-content">${escapeHtml(m.content)}</p>
+          </div>
+          <button class="btn-unfeature" data-msg-id="${m.id}">✨ 取消精选</button>
+        </div>
+      `).join('');
+      list.querySelectorAll('.btn-unfeature').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          btn.disabled = true;
+          btn.textContent = '取消中…';
+          await DB.adminSetFeatured(btn.dataset.msgId, false);
+          // 同步更新 allMessages 中的状态
+          const msg = allMessages.find(m => m.id === btn.dataset.msgId);
+          if (msg) msg.is_featured = false;
+          await loadFeaturedMgr();
+          renderMessages(); // 刷新消息列表中的按钮状态
+        });
+      });
+    } catch {
+      list.innerHTML = '<p class="empty">加载失败</p>';
+    }
+  }
+
   // ── 屏蔽词管理面板 ─────────────────────────────────────────
   let bwordsLoaded = false;
   document.getElementById('bwords-toggle').addEventListener('click', () => {

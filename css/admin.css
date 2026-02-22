@@ -1173,3 +1173,52 @@
     @media (max-width: 500px) {
       .stats { flex-direction: column; }
     }
+
+/* 精选管理面板 */
+.featured-mgr-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 8px;
+}
+
+.featured-mgr-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.featured-mgr-item:last-child { border-bottom: none; }
+
+.featured-mgr-content {
+  flex: 1;
+  font-size: 0.88rem;
+  line-height: 1.5;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.featured-mgr-meta {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  margin-top: 3px;
+}
+
+.btn-unfeature {
+  flex-shrink: 0;
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 3px 10px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.btn-unfeature:hover { border-color: #c8a03a; color: #c8a03a; }
