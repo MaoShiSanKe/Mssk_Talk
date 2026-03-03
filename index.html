@@ -14,8 +14,8 @@
 <div id="bubble-layer" style="display:none"></div>
 
 <header>
-    <h1 data-i18n="site.title">留言给我</h1>
-    <p data-i18n="site.description">你的消息会以匿名方式送达，联系方式完全可选。</p>
+    <h1 id="site-title">留言给我</h1>
+    <p id="site-description">你的消息会以匿名方式送达，联系方式完全可选。</p>
   </header>
 
   <!-- 置顶消息（showPinned 开启且有置顶内容时显示） -->
@@ -50,7 +50,7 @@
           data-i18n="form.image_url_placeholder"
           placeholder="https://your-image-host.com/image.jpg"
         >
-        <p class="tip">请先将图片上传至图床（如 <a href="https://imgur.com" target="_blank" rel="noopener" class="tip-link">Imgur</a>、<a href="https://imgbb.com" target="_blank" rel="noopener" class="tip-link">ImgBB</a>），再粘贴链接</p>
+        <p class="tip" data-i18n="form.image_url_tip">请先将图片上传至图床，再粘贴链接</p>
       </div>
 
       <div class="form-group" id="contact-group">

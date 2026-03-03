@@ -8,7 +8,7 @@
     "message_placeholder": "写下你想说的话……",
     "image_url_label": "图片链接（可选）",
     "image_url_placeholder": "https://your-image-host.com/image.jpg",
-    "image_url_tip": "请先将图片上传至图床，再粘贴链接",
+    "image_url_tip": "请先将图片上传至图床（如 Imgur、ImgBB），再粘贴链接",
     "contact_label": "联系方式（可选）",
     "contact_placeholder": "邮箱、Twitter、微博……随你填",
     "submit": "发送消息",

@@ -8,7 +8,7 @@
     "message_placeholder": "Write what's on your mind…",
     "image_url_label": "Image link (optional)",
     "image_url_placeholder": "https://your-image-host.com/image.jpg",
-    "image_url_tip": "Upload your image to an image host first, then paste the link",
+    "image_url_tip": "Upload your image to an image host first (e.g. Imgur, ImgBB), then paste the link",
     "contact_label": "Contact info (optional)",
     "contact_placeholder": "Email, Twitter, anything you like…",
     "submit": "Send Message",

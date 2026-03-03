@@ -9,14 +9,17 @@
     return;
   }
 
-  const S = CONFIG.settings; // 简写
+  const S = CONFIG.settings;
 
-  // 更新页面标题和描述（从 settings 读取）
-  const titleEl = document.querySelector('h1[data-i18n="site.title"]');
-  const descEl  = document.querySelector('p[data-i18n="site.description"]');
-  if (titleEl) titleEl.textContent = S.siteTitle;
-  if (descEl)  descEl.textContent  = S.siteDescription;
-  document.title = S.siteTitle;
+  // 设置自定义标题（优先于 i18n，不受语言切换影响）
+  function applySiteTitle() {
+    const titleEl = document.getElementById('site-title');
+    const descEl  = document.getElementById('site-description');
+    if (titleEl) titleEl.textContent = S.siteTitle;
+    if (descEl)  descEl.textContent  = S.siteDescription;
+    document.title = S.siteTitle;
+  }
+  applySiteTitle();
 
   // 初始化语言
   const savedLang = localStorage.getItem(CONFIG.storage.lang) || CONFIG.defaultLang;
@@ -77,6 +80,7 @@
       const next = I18n.currentLang() === 'zh' ? 'en' : 'zh';
       await I18n.load(next);
       langToggle.textContent = next === 'zh' ? 'EN' : '中';
+      applySiteTitle(); // i18n 切换后重新覆盖标题
       // 字数统计文字也要更新
       charCount.textContent = `${textarea.value.length} / ${MAX_CHARS}`;
     });
