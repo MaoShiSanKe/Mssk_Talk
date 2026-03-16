@@ -28,6 +28,27 @@
 - 访客统计（总数、今日新增、近7天消息量柱状图）
 - 暖色 / 冷色配色方案切换
 
+<table style="width: 100%; border-collapse: collapse;">
+  <tr>
+    <td width="50%" align="center">
+      <img src="https://github.com/user-attachments/assets/7f511a07-f190-45ef-8d89-370401169ea0" width="100%">
+    </td>
+    <td width="50%" align="center">
+      <img src="https://github.com/user-attachments/assets/2fa15c05-6e75-4677-b43b-69d36be77372" width="100%">
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <img src="https://github.com/user-attachments/assets/7c6039c3-cbec-4eab-bc72-dbe12f94218f" width="100%">
+    </td>
+    <td width="50%" align="center">
+      <img src="https://github.com/user-attachments/assets/22a16c34-e130-4379-a912-960739037860" width="100%">
+    </td>
+  </tr>
+</table>
+
+
+
 **防垃圾**
 - Honeypot 隐藏字段
 - IP 速率限制（每分钟最多3条）
