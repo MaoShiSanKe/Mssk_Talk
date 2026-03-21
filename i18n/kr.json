@@ -1,0 +1,57 @@
+{
+  "site": {
+    "title": "메시지 남기기",
+    "subtitle": "하고 싶은 말이 있다면 남겨주세요",
+    "description": "메시지는 익명으로 전달됩니다. 연락처는 완전히 선택 사항입니다."
+  },
+  "form": {
+    "message_placeholder": "하고 싶은 말을 적어보세요…",
+    "image_url_label": "이미지 링크 (선택)",
+    "image_url_placeholder": "https://your-image-host.com/image.jpg",
+    "image_url_tip": "이미지를 먼저 이미지 호스팅 사이트(예: Imgur, ImgBB)에 업로드한 후 링크를 붙여주세요",
+    "contact_label": "연락처 (선택)",
+    "contact_placeholder": "이메일, 트위터 등 자유롭게 입력하세요…",
+    "submit": "메시지 보내기",
+    "submitting": "전송 중…"
+  },
+  "feedback": {
+    "success_title": "전송 완료",
+    "success_body": "메시지를 보내주셔서 감사합니다. 정기적으로 확인하겠습니다.",
+    "error_title": "전송 실패",
+    "error_body": "잠시 후 다시 시도해주세요.",
+    "blocked": "메시지를 보낼 수 없습니다.",
+    "message_required": "내용을 입력한 후 전송해주세요.",
+    "send_another": "다시 보내기"
+  },
+  "history": {
+    "title": "내 메시지 기록",
+    "empty": "아직 메시지가 없습니다.",
+    "toggle_show": "기록 보기",
+    "toggle_hide": "기록 숨기기"
+  },
+  "admin": {
+    "login_title": "관리자 패널",
+    "password_placeholder": "비밀번호를 입력하세요",
+    "login_btn": "로그인",
+    "login_error": "비밀번호가 올바르지 않습니다",
+    "logout": "로그아웃",
+    "all_messages": "전체",
+    "unread_only": "읽지 않음",
+    "mark_read": "읽음 처리",
+    "block_user": "차단",
+    "unblock_user": "차단 해제",
+    "add_note": "메모 추가",
+    "note_placeholder": "이 사용자에 대한 메모…",
+    "save_note": "저장",
+    "no_messages": "메시지가 없습니다",
+    "visitor_id": "사용자",
+    "contact": "연락처",
+    "image": "이미지",
+    "blocked_badge": "차단됨",
+    "unread_badge": "읽지 않음",
+    "loading": "로딩 중…",
+    "stats_total": "전체",
+    "stats_unread": "읽지 않음",
+    "stats_visitors": "사용자 수"
+  }
+}
