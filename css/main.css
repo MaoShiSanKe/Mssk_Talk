@@ -517,3 +517,39 @@
   margin-top: 6px;
   opacity: 0.7;
 }
+
+/* 语言菜单 */
+.lang-menu {
+  position: fixed;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  overflow: hidden;
+  z-index: 100;
+  min-width: 110px;
+}
+
+.lang-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 9px 14px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  color: var(--text);
+  gap: 10px;
+  transition: background 0.1s;
+}
+
+.lang-menu-item:hover { background: var(--accent-light); }
+
+.lang-menu-item.active {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.lang-menu-check {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}

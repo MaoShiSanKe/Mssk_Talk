@@ -73,17 +73,51 @@
   const honeypotInput = document.getElementById('_hp'); // 隐藏的防机器人字段
 
   // ── 语言切换 ───────────────────────────────────────────────
+  // ── 语言菜单 ───────────────────────────────────────────────
   const langToggle = document.getElementById('lang-toggle');
-  if (langToggle) {
-    // 按钮显示"下一个语言"，提示用户点了会切到哪里
-    langToggle.textContent = I18n.labelOf(I18n.nextLang());
-    langToggle.addEventListener('click', async () => {
-      const next = I18n.nextLang();
-      await I18n.load(next);
-      langToggle.textContent = I18n.labelOf(I18n.nextLang());
-      applySiteTitle();
-      charCount.textContent = `${textarea.value.length} / ${MAX_CHARS}`;
+  const langMenu   = document.getElementById('lang-menu');
+
+  function renderLangMenu() {
+    langMenu.innerHTML = I18n.langs().map(({ key, label }) => `
+      <div class="lang-menu-item ${key === I18n.currentLang() ? 'active' : ''}" data-lang="${key}">
+        <span>${label}</span>
+        ${key === I18n.currentLang() ? '<span class="lang-menu-check">✓</span>' : ''}
+      </div>
+    `).join('');
+
+    langMenu.querySelectorAll('.lang-menu-item').forEach(item => {
+      item.addEventListener('click', async () => {
+        const lang = item.dataset.lang;
+        if (lang === I18n.currentLang()) { langMenu.style.display = 'none'; return; }
+        await I18n.load(lang);
+        applySiteTitle();
+        charCount.textContent = `${textarea.value.length} / ${MAX_CHARS}`;
+        langMenu.style.display = 'none';
+      });
     });
+  }
+
+  if (langToggle && langMenu) {
+    langToggle.addEventListener('click', e => {
+      e.stopPropagation();
+      const isHidden = langMenu.style.display === 'none';
+      if (isHidden) {
+        // 定位到按钮上方
+        const rect = langToggle.getBoundingClientRect();
+        langMenu.style.display = 'block';
+        renderLangMenu();
+        const menuH = langMenu.offsetHeight;
+        langMenu.style.position = 'fixed';
+        langMenu.style.left = `${rect.left}px`;
+        langMenu.style.top  = `${rect.top - menuH - 6}px`;
+      } else {
+        langMenu.style.display = 'none';
+      }
+    });
+
+    // 点击外部关闭
+    document.addEventListener('click', () => { langMenu.style.display = 'none'; });
+    langMenu.addEventListener('click', e => e.stopPropagation());
   }
 
   // ── 提交间隔限制 ───────────────────────────────────────────
