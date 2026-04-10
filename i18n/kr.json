@@ -71,7 +71,7 @@
     "export_exporting": "내보내는 중…",
     "export_empty": "일치하는 데이터가 없습니다",
     "section_settings": "시스템 설정",
-    "section_vstats": "방객 통계",
+    "section_vstats": "방문 통계",
     "section_featured": "추천 관리",
     "section_bwords": "금지어 관리",
     "section_messages": "메시지 관리",
@@ -166,6 +166,8 @@
     "setting_featured_count": "거품 수 제한",
     "setting_featured_count_desc": "동시에 표시될 거품 수 (8-12 추천)",
     "setting_featured_auto": "거품 자동 채우기",
-    "setting_featured_auto_desc": "추천 메시지가 부족할 때 일반 메시지에서 무작위로 보충"
+    "setting_featured_auto_desc": "추천 메시지가 부족할 때 일반 메시지에서 무작위로 보충",
+    "setting_webhook_url": "Webhook URL",
+    "setting_webhook_url_desc": "새 메시지 수신 시 이 URL로 POST 요청 전송 (비활성화하려면 비워둠)"
   }
 }
