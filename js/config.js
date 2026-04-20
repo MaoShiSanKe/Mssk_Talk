@@ -25,10 +25,13 @@ const CONFIG = {
     showPinned: true,
     siteTitle: '留言给我',
     siteDescription: '你的消息会以匿名方式送达，联系方式完全可选。',
+    showPublicBoard: false,
+    publicBoardTitle: '留言板',
   },
 
   featuredBubbles: [],
   pinnedMessages: [],
+  publicMessages: [],
 
   storage: {
     visitorId: 'mssk_visitor_id',
@@ -46,5 +49,6 @@ const CONFIG = {
     if (remote.settings) this.settings = { ...this.settings, ...remote.settings };
     if (remote.featuredBubbles) this.featuredBubbles = remote.featuredBubbles;
     if (remote.pinnedMessages) this.pinnedMessages = remote.pinnedMessages;
+    if (remote.publicMessages) this.publicMessages = remote.publicMessages;
   },
 };
