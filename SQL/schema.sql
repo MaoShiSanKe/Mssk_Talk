@@ -27,7 +27,8 @@ CREATE TABLE IF NOT EXISTS messages (
   is_blocked       BOOLEAN DEFAULT FALSE,   -- 管理员手动屏蔽
   is_featured      BOOLEAN DEFAULT FALSE,   -- 漂浮留言墙精选
   is_pinned        BOOLEAN DEFAULT FALSE,   -- 置顶
-  is_word_blocked  BOOLEAN DEFAULT FALSE    -- 屏蔽词自动拦截
+  is_word_blocked  BOOLEAN DEFAULT FALSE,   -- 屏蔽词自动拦截
+  is_public        BOOLEAN DEFAULT FALSE    -- 公开留言板可见
 );
 
 -- ── 3. 系统配置表 ────────────────────────────────────────────
@@ -105,5 +106,7 @@ INSERT INTO settings (key, value, description) VALUES
   ('show_pinned',        'true',  '是否在用户端显示置顶消息入口'),
   ('show_featured',      'false', '是否开启漂浮留言墙'),
   ('featured_count',     '10',    '漂浮留言墙最大气泡数量，推荐 8-12'),
-  ('featured_auto',      'true',  '手动精选数量不足时，是否自动从留言中随机补齐')
+  ('featured_auto',      'true',  '手动精选数量不足时，是否自动从留言中随机补齐'),
+  ('show_public_board',  'false', '是否在用户端显示公开留言板'),
+  ('public_board_title', '留言板', '公开留言板区域标题')
 ON CONFLICT (key) DO NOTHING;
