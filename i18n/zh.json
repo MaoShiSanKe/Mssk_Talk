@@ -168,6 +168,12 @@
     "setting_featured_auto": "自动补齐漂浮留言",
     "setting_featured_auto_desc": "手动精选数量不足时，自动从留言中随机补齐",
     "setting_webhook_url": "Webhook 地址",
-    "setting_webhook_url_desc": "收到新留言时向此 URL 发送 POST 请求，留空禁用"
+    "setting_webhook_url_desc": "收到新留言时向此 URL 发送 POST 请求，留空禁用",
+    "public_btn": "🌐 公开",
+    "unpublic_btn": "🌐 已公开",
+    "setting_show_public_board": "开启公开留言板",
+    "setting_show_public_board_desc": "在用户端显示所有已公开的留言",
+    "setting_public_board_title": "留言板标题",
+    "setting_public_board_title_desc": "公开留言板区域的标题文字"
   }
 }

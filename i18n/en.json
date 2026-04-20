@@ -168,6 +168,12 @@
     "setting_featured_auto": "Auto-fill bubbles",
     "setting_featured_auto_desc": "Auto-supplement from messages when featured count is low",
     "setting_webhook_url": "Webhook URL",
-    "setting_webhook_url_desc": "POST new message events to this URL; leave empty to disable"
+    "setting_webhook_url_desc": "POST new message events to this URL; leave empty to disable",
+    "public_btn": "🌐 Make public",
+    "unpublic_btn": "🌐 Public",
+    "setting_show_public_board": "Public message board",
+    "setting_show_public_board_desc": "Show publicly visible messages on the user page",
+    "setting_public_board_title": "Board title",
+    "setting_public_board_title_desc": "Title shown above the public message board"
   }
 }
