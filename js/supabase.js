@@ -174,6 +174,10 @@ const DB = (() => {
     return _adminCall('releaseWordBlocked', { messageId });
   }
 
+  async function adminSetPublic(messageId, isPublic) {
+    return _adminCall('setPublic', { messageId, isPublic });
+  }
+
   async function adminSetPinned(messageId, pinned) {
     return _adminCall('setPinned', { messageId, pinned });
   }
@@ -204,7 +208,7 @@ const DB = (() => {
     adminGetAllMessages, adminGetStats, adminGetVisitorStats,
     adminMarkRead, adminBlockVisitor, adminBlockMessage, adminSaveNote,
     adminGetReplies, adminAddReply, adminEditReply, adminDeleteReply,
-    adminSetPinned, adminSetFeatured, adminGetFeaturedMessages,
+    adminSetPublic, adminSetPinned, adminSetFeatured, adminGetFeaturedMessages,
     adminGetBlockedWords, adminAddBlockedWord, adminDeleteBlockedWord, adminReleaseWordBlocked,
     adminGetSettings, adminSaveSetting,
   };
