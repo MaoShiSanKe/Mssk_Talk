@@ -25,6 +25,37 @@
   const savedLang = localStorage.getItem(CONFIG.storage.lang) || CONFIG.defaultLang;
   await I18n.load(savedLang);
 
+  // ── 公开留言板 ─────────────────────────────────────────────
+  if (S.showPublicBoard && CONFIG.publicMessages?.length) {
+    const board     = document.getElementById('public-board');
+    const titleEl   = document.getElementById('public-board-title');
+    const countEl   = document.getElementById('public-board-count');
+    const listEl    = document.getElementById('public-board-list');
+    if (board && titleEl && listEl) {
+      board.style.display = 'block';
+      titleEl.textContent = S.publicBoardTitle;
+      countEl.textContent = `${CONFIG.publicMessages.length}`;
+      listEl.innerHTML = CONFIG.publicMessages.map(m => {
+        const hasNickname = m.nickname;
+        const avatarHtml = m.avatar_url
+          ? `<img class="public-msg-avatar" src="${escapeHtml(m.avatar_url)}" alt="" onerror="this.style.display='none'">`
+          : '';
+        const nameHtml = hasNickname
+          ? `<span class="public-msg-nickname">${escapeHtml(m.nickname)}</span>`
+          : `<span class="public-msg-anon">Anonymous</span>`;
+        return `
+          <div class="public-msg">
+            <div class="public-msg-header">
+              ${avatarHtml}
+              ${nameHtml}
+            </div>
+            <p class="public-msg-content">${escapeHtml(m.content)}</p>
+            <span class="public-msg-time">${formatTime(m.created_at)}</span>
+          </div>`;
+      }).join('');
+    }
+  }
+
   // ── 置顶消息 ───────────────────────────────────────────────
   if (CONFIG.settings.showPinned && CONFIG.pinnedMessages?.length) {
     const pinnedSection = document.getElementById('pinned-section');
