@@ -35,6 +35,15 @@ export async function onRequestPost(context) {
     let result;
 
     switch (action) {
+      case 'setPublic': {
+        const res = await fetch(
+          `${supabaseUrl}/rest/v1/messages?id=eq.${payload.messageId}`,
+          { method: 'PATCH', headers, body: JSON.stringify({ is_public: payload.isPublic }) }
+        );
+        result = await res.json();
+        break;
+      }
+
       case 'setPinned': {
         const res = await fetch(
           `${supabaseUrl}/rest/v1/messages?id=eq.${payload.messageId}`,

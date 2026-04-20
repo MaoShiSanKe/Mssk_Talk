@@ -17,12 +17,14 @@ export async function onRequestGet(context) {
   let settings = {};
   let featuredMessages = [];
   let pinnedMessages = [];
+  let publicMessages = [];
 
   try {
-    const [settingsRes, featuredRes, pinnedRes] = await Promise.all([
+    const [settingsRes, featuredRes, pinnedRes, publicRes] = await Promise.all([
       fetch(`${supabaseUrl}/rest/v1/settings?select=key,value`, { headers: dbHeaders }),
-      fetch(`${supabaseUrl}/rest/v1/messages?is_featured=eq.true&is_blocked=eq.false&select=id,content&order=created_at.desc`, { headers: dbHeaders }),
-      fetch(`${supabaseUrl}/rest/v1/messages?is_pinned=eq.true&is_blocked=eq.false&select=id,content,created_at&order=created_at.desc`, { headers: dbHeaders }),
+      fetch(`${supabaseUrl}/rest/v1/messages?is_featured=eq.true&is_blocked=eq.false&is_word_blocked=eq.false&select=id,content&order=created_at.desc`, { headers: dbHeaders }),
+      fetch(`${supabaseUrl}/rest/v1/messages?is_pinned=eq.true&is_blocked=eq.false&is_word_blocked=eq.false&select=id,content,created_at&order=created_at.desc`, { headers: dbHeaders }),
+      fetch(`${supabaseUrl}/rest/v1/messages?is_public=eq.true&is_blocked=eq.false&is_word_blocked=eq.false&select=id,content,created_at,visitors(nickname,avatar_url)&order=created_at.desc&limit=100`, { headers: dbHeaders }),
     ]);
 
     const rows = await settingsRes.json();
@@ -35,6 +37,9 @@ export async function onRequestGet(context) {
 
     const pinned = await pinnedRes.json();
     if (Array.isArray(pinned)) pinnedMessages = pinned;
+
+    const pub = await publicRes.json();
+    if (Array.isArray(pub)) publicMessages = pub;
   } catch { }
 
   const showFeatured = settings.show_featured === 'true';
@@ -79,6 +84,8 @@ export async function onRequestGet(context) {
       showPinned: settings.show_pinned !== 'false',
       siteTitle: settings.site_title || '留言给我',
       siteDescription: settings.site_description || '你的消息会以匿名方式送达，联系方式完全可选。',
+      showPublicBoard: settings.show_public_board === 'true',
+      publicBoardTitle: settings.public_board_title || '留言板',
     },
     // 精选留言气泡数据（仅内容，无隐私信息）
     featuredBubbles: showFeatured ? bubbles.map(m => ({
@@ -90,6 +97,14 @@ export async function onRequestGet(context) {
       id: m.id,
       content: m.content,
       created_at: m.created_at,
+    })) : [],
+    // 公开留言板（showPublicBoard 开启时下发，不含联系方式和图片）
+    publicMessages: settings.show_public_board === 'true' ? publicMessages.map(m => ({
+      id: m.id,
+      content: m.content,
+      created_at: m.created_at,
+      nickname: m.visitors?.nickname || null,
+      avatar_url: m.visitors?.avatar_url || null,
     })) : [],
   };
 
