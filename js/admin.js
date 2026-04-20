@@ -371,6 +371,8 @@
       show_featured:       { type: 'bool',   label: I18n.t('admin.setting_show_featured'),      desc: I18n.t('admin.setting_show_featured_desc') },
       featured_count:      { type: 'number', label: I18n.t('admin.setting_featured_count'),     desc: I18n.t('admin.setting_featured_count_desc') },
       featured_auto:       { type: 'bool',   label: I18n.t('admin.setting_featured_auto'),      desc: I18n.t('admin.setting_featured_auto_desc') },
+      show_public_board:   { type: 'bool',   label: I18n.t('admin.setting_show_public_board'),  desc: I18n.t('admin.setting_show_public_board_desc') },
+      public_board_title:  { type: 'text',   label: I18n.t('admin.setting_public_board_title'), desc: I18n.t('admin.setting_public_board_title_desc') },
     };
   }
 
@@ -813,6 +815,9 @@
           </button>
           <button class="btn-pinned ${m.is_pinned ? 'on' : ''}" data-msg-id="${m.id}" data-pinned="${!!m.is_pinned}" title="${I18n.t('admin.pin_btn')}">
             ${m.is_pinned ? I18n.t('admin.unpin_btn') : I18n.t('admin.pin_btn')}
+          </button>
+          <button class="btn-public ${m.is_public ? 'on' : ''}" data-msg-id="${m.id}" data-public="${!!m.is_public}" title="${I18n.t('admin.public_btn')}">
+            ${m.is_public ? I18n.t('admin.unpublic_btn') : I18n.t('admin.public_btn')}
           </button>`
           }
           <button class="btn-reply-toggle" data-msg-id="${m.id}">💬 ${hasReplies ? I18n.t('admin.reply_view_btn').replace('💬 ','') : I18n.t('admin.reply_btn').replace('💬 ','')}</button>
@@ -974,6 +979,22 @@
         btn.dataset.featured = String(!isFeatured);
         btn.textContent = !isFeatured ? I18n.t('admin.unfeature_btn') : I18n.t('admin.feature_btn');
         btn.classList.toggle('on', !isFeatured);
+        btn.disabled = false;
+      });
+    });
+
+    // 公开/取消公开
+    document.querySelectorAll('.btn-public').forEach(btn => {
+      btn.addEventListener('click', async e => {
+        e.stopPropagation();
+        const isPublic = btn.dataset.public === 'true';
+        btn.disabled = true;
+        await DB.adminSetPublic(btn.dataset.msgId, !isPublic);
+        const msg = allMessages.find(m => m.id === btn.dataset.msgId);
+        if (msg) msg.is_public = !isPublic;
+        btn.dataset.public = String(!isPublic);
+        btn.textContent = !isPublic ? I18n.t('admin.unpublic_btn') : I18n.t('admin.public_btn');
+        btn.classList.toggle('on', !isPublic);
         btn.disabled = false;
       });
     });
