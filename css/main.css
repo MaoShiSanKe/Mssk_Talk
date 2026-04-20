@@ -553,3 +553,93 @@
   font-size: 0.75rem;
   opacity: 0.7;
 }
+
+/* 公开留言板 */
+.public-board {
+  width: 100%;
+  max-width: 560px;
+  margin-top: 24px;
+  position: relative;
+  z-index: 1;
+}
+
+.public-board-header {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border);
+}
+
+.public-board-title {
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 300;
+  font-size: 1.1rem;
+  color: var(--accent);
+  letter-spacing: 0.05em;
+  margin: 0;
+}
+
+.public-board-count {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.public-board-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.public-msg {
+  background: var(--surface);
+  padding: 14px 16px;
+}
+
+.public-msg-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.public-msg-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+  background: var(--border);
+}
+
+.public-msg-nickname {
+  font-size: 0.8rem;
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.public-msg-anon {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.public-msg-content {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.public-msg-time {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  display: block;
+  margin-top: 6px;
+}
