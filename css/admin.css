@@ -653,6 +653,26 @@
     .btn-pinned:hover { border-color: #4a7a9b; color: #4a7a9b; }
     .btn-pinned:disabled { opacity: 0.5; cursor: not-allowed; }
 
+    .btn-public {
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 3px 10px;
+      font-size: 0.78rem;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-family: inherit;
+    }
+
+    .btn-public.on {
+      border-color: var(--success);
+      color: var(--success);
+      background: rgba(61,107,79,0.08);
+    }
+
+    .btn-public:hover { border-color: var(--success); color: var(--success); }
+    .btn-public:disabled { opacity: 0.5; cursor: not-allowed; }
+
     .btn-reply-toggle {
       background: none;
       border: 1px solid var(--border);
