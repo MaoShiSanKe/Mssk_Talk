@@ -1,0 +1,27 @@
+name: Database Keepalive
+
+on:
+  schedule:
+    # 每 5 天运行一次（UTC 时间 00:00）
+    - cron: '0 0 */5 * *'
+  workflow_dispatch: # 允许手动触发，方便测试
+
+jobs:
+  ping:
+    name: Ping database
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call keepalive endpoint
+        run: |
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "X-Keepalive-Secret: ${{ secrets.KEEPALIVE_SECRET }}" \
+            "${{ secrets.SITE_URL }}/api/keepalive")
+
+          echo "Response: $RESPONSE"
+
+          if [ "$RESPONSE" != "200" ]; then
+            echo "Keepalive failed with status $RESPONSE"
+            exit 1
+          fi
+
+          echo "Database is active."
