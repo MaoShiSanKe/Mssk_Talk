@@ -16,6 +16,10 @@ export async function onRequestPost(context) {
   }
 
   // 每次管理员请求都携带密码做验证（简单方案，无需 session token）
+  if (!env.ADMIN_PASSWORD) {
+    return json({ error: 'server misconfigured' }, 500);
+  }
+
   if (body.password !== env.ADMIN_PASSWORD) {
     return json({ error: 'unauthorized' }, 401);
   }
