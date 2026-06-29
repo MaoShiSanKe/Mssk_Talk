@@ -2,10 +2,11 @@
 // 发送消息接口，包含：
 //   1. Honeypot 检测（机器人防护）
 //   2. IP 频率限制（每IP每分钟最多10条）
-//   3. 服务端屏蔽检查
-//   4. 每日限制检查
-//   5. 屏蔽词检测
-//   6. 新消息通知（TG Bot / Resend 邮件 / Webhook，可选）
+//   3. 服务端设置检查
+//   4. 服务端屏蔽检查
+//   5. 每日限制检查
+//   6. 屏蔽词检测
+//   7. 新消息通知（TG Bot / Resend 邮件 / Webhook，可选）
 //
 // 必填环境变量：
 //   SUPABASE_URL、SUPABASE_SECRET_KEY
@@ -35,13 +36,19 @@ export async function onRequestPost(context) {
   }
 
   const { visitorId, content, imageUrl, contact, _hp } = body;
+  const cleanContent = typeof content === 'string' ? content.trim() : '';
+  const cleanContact = typeof contact === 'string' ? contact.trim() : '';
+  const cleanImageUrl = typeof imageUrl === 'string' ? imageUrl.trim() : '';
 
   // ── 1. Honeypot ─────────────────────────────────────────────
   if (_hp) return json({ ok: true });
 
   // ── 2. 基本校验 ─────────────────────────────────────────────
-  if (!visitorId || !content?.trim()) {
+  if (!visitorId || !cleanContent) {
     return json({ error: '内容不能为空' }, 400);
+  }
+  if (!isUuid(visitorId)) {
+    return json({ error: '访客身份无效' }, 400);
   }
 
   // ── 3. IP 频率限制 ──────────────────────────────────────────
@@ -72,7 +79,27 @@ export async function onRequestPost(context) {
     'Prefer': 'return=representation',
   };
 
-  // ── 4. 服务端屏蔽检查 ───────────────────────────────────────
+  // ── 4. 服务端设置检查 ───────────────────────────────────────
+  let messageSettings;
+  try {
+    messageSettings = await loadMessageSettings(supabaseUrl, headers);
+  } catch {
+    return json({ error: '服务暂时不可用，请稍后再试' }, 500);
+  }
+
+  if (!messageSettings.allowMessages) {
+    return json({ error: '留言暂时关闭' }, 403);
+  }
+
+  if (messageSettings.requireContact && !cleanContact) {
+    return json({ error: '请填写联系方式' }, 400);
+  }
+
+  if (cleanContent.length > messageSettings.maxMessageLength) {
+    return json({ error: `内容不能超过 ${messageSettings.maxMessageLength} 字` }, 400);
+  }
+
+  // ── 5. 服务端屏蔽检查 ───────────────────────────────────────
   try {
     const vRes = await fetch(
       `${supabaseUrl}/rest/v1/visitors?id=eq.${visitorId}&select=is_blocked`,
@@ -82,14 +109,9 @@ export async function onRequestPost(context) {
     if (vData[0]?.is_blocked) return json({ error: '无法发送消息' }, 403);
   } catch { }
 
-  // ── 5. 每日限制检查 ─────────────────────────────────────────
+  // ── 6. 每日限制检查 ─────────────────────────────────────────
   try {
-    const settingsRes = await fetch(
-      `${supabaseUrl}/rest/v1/settings?key=eq.daily_limit&select=value`,
-      { headers }
-    );
-    const settingsData = await settingsRes.json();
-    const dailyLimit = parseInt(settingsData[0]?.value ?? '0');
+    const dailyLimit = messageSettings.dailyLimit;
     if (dailyLimit > 0) {
       const today = new Date().toISOString().slice(0, 10);
       const countRes = await fetch(
@@ -103,7 +125,7 @@ export async function onRequestPost(context) {
     }
   } catch { }
 
-  // ── 6. 屏蔽词检测 ───────────────────────────────────────────
+  // ── 7. 屏蔽词检测 ───────────────────────────────────────────
   let isWordBlocked = false;
   try {
     const wordsRes = await fetch(
@@ -112,23 +134,23 @@ export async function onRequestPost(context) {
     );
     const wordsData = await wordsRes.json();
     if (Array.isArray(wordsData) && wordsData.length > 0) {
-      const lowerContent = content.trim().toLowerCase();
+      const lowerContent = cleanContent.toLowerCase();
       isWordBlocked = wordsData.some(({ word }) =>
         lowerContent.includes(word.toLowerCase())
       );
     }
   } catch { /* 查询失败则继续，不因屏蔽词服务出错影响正常用户 */ }
 
-  // ── 7. 写入消息 ─────────────────────────────────────────────
+  // ── 8. 写入消息 ─────────────────────────────────────────────
   try {
     const msgRes = await fetch(`${supabaseUrl}/rest/v1/messages`, {
       method: 'POST',
       headers,
       body: JSON.stringify({
         visitor_id: visitorId,
-        content: content.trim(),
-        image_url: imageUrl || null,
-        contact: contact || null,
+        content: cleanContent,
+        image_url: cleanImageUrl || null,
+        contact: cleanContact || null,
         is_word_blocked: isWordBlocked,
       }),
     });
@@ -139,7 +161,7 @@ export async function onRequestPost(context) {
     record.lastSubmit = now;
     ipStore.set(ip, record);
 
-    // ── 8. 发送通知（仅正常消息通知，屏蔽词消息不通知）────────
+    // ── 9. 发送通知（仅正常消息通知，屏蔽词消息不通知）────────
     if (!isWordBlocked) {
       // 读取 webhook_url 设置（和屏蔽词查询复用同一个 headers）
       let webhookUrl = '';
@@ -153,9 +175,9 @@ export async function onRequestPost(context) {
       } catch { /* 读取失败不影响消息发送 */ }
 
       context.waitUntil(sendNotifications(env, {
-        content: content.trim(),
-        contact: contact || null,
-        imageUrl: imageUrl || null,
+        content: cleanContent,
+        contact: cleanContact || null,
+        imageUrl: cleanImageUrl || null,
         visitorId,
       }, webhookUrl));
     }
@@ -164,6 +186,43 @@ export async function onRequestPost(context) {
   } catch (e) {
     return json({ error: '发送失败，请重试' }, 500);
   }
+}
+
+async function loadMessageSettings(supabaseUrl, headers) {
+  const keys = 'allow_messages,require_contact,max_message_length,daily_limit';
+  const res = await fetch(
+    `${supabaseUrl}/rest/v1/settings?key=in.(${keys})&select=key,value`,
+    { headers }
+  );
+  if (!res.ok) throw new Error('settings fetch failed');
+
+  const rows = await res.json();
+  const values = {};
+  if (Array.isArray(rows)) {
+    for (const row of rows) values[row.key] = row.value;
+  }
+
+  return {
+    allowMessages: values.allow_messages !== 'false',
+    requireContact: values.require_contact === 'true',
+    maxMessageLength: parsePositiveInt(values.max_message_length, 2000),
+    dailyLimit: parseNonNegativeInt(values.daily_limit, 0),
+  };
+}
+
+function parsePositiveInt(value, fallback) {
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
+}
+
+function parseNonNegativeInt(value, fallback) {
+  const parsed = parseInt(value, 10);
+  return Number.isFinite(parsed) && parsed >= 0 ? parsed : fallback;
+}
+
+function isUuid(value) {
+  return typeof value === 'string' &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
 }
 
 // ── 通知调度 ────────────────────────────────────────────────────
