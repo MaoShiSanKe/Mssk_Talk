@@ -1,7 +1,7 @@
 -- ============================================================
 -- Mssk_Talk 完整数据库初始化脚本
--- 在 Supabase SQL Editor 中执行
--- 支持重复执行（IF NOT EXISTS / ON CONFLICT DO NOTHING）
+-- 在 Supabase SQL Editor 中执行，用于初始化全新数据库
+-- 已有数据库请按 Database.md 中的 targeted update 执行变更
 -- ============================================================
 
 -- ── 1. 访客表 ────────────────────────────────────────────────
@@ -75,9 +75,8 @@ CREATE POLICY "visitors_insert" ON visitors
 CREATE POLICY "visitors_select" ON visitors
   FOR SELECT USING (true);
 
--- messages：匿名用户可插入和读取
-CREATE POLICY "messages_insert" ON messages
-  FOR INSERT TO anon WITH CHECK (true);
+-- messages：匿名用户可读取；写入必须通过 /api/message 使用 service_role key
+DROP POLICY IF EXISTS "messages_insert" ON messages;
 
 CREATE POLICY "messages_select" ON messages
   FOR SELECT USING (true);

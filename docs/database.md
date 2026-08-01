@@ -2,7 +2,7 @@
 
 All tables live in a single Supabase (PostgreSQL) project. Row Level Security (RLS) is enabled on every table.
 
-Run [`schema.sql`](../schema.sql) to initialize a fresh database. The script is idempotent — safe to run multiple times.
+Run [`schema.sql`](../schema.sql) to initialize a fresh database. For existing deployments, apply the targeted SQL changes listed in this document instead of rerunning the full initialization script.
 
 ---
 
@@ -49,7 +49,9 @@ One row per submitted message.
 - `is_word_blocked` messages are hidden from normal views; admin sees them via "Word Filtered" filter and can release (clear flag) or delete.
 - `is_featured` and `is_pinned` can coexist on the same message.
 
-**RLS policies:** anon can INSERT and SELECT. No anon UPDATE or DELETE.
+**RLS policies:** anon can SELECT. No anon INSERT/UPDATE/DELETE — message writes go through `/api/message`, which uses the `service_role` key and enforces moderation, rate limits, and runtime settings.
+
+Known limitation: the current anon `SELECT` policy is intentionally left broad for the existing user-facing history flow. Narrowing reads through sanitized Functions or database views is a separate security-hardening step.
 
 **Indexes:**
 - `visitor_id` — for grouping messages by visitor
@@ -137,6 +139,16 @@ When adding a new column to an existing table:
 Example — adding `is_pinned` to `messages`:
 ```sql
 ALTER TABLE messages ADD COLUMN IF NOT EXISTS is_pinned BOOLEAN DEFAULT FALSE;
+```
+
+---
+
+## Existing Database Updates
+
+For deployments created before message writes were moved fully behind `/api/message`, remove the old anonymous insert policy:
+
+```sql
+DROP POLICY IF EXISTS "messages_insert" ON messages;
 ```
 
 ---

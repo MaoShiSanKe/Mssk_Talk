@@ -13,8 +13,8 @@ Browser
   └── API calls (/api/*)
         Handled by Cloudflare Pages Functions
               │
-              ├── Supabase REST API (anon key)   — read/write messages, visitors, settings
-              └── Supabase REST API (secret key) — write replies, update visitors, admin ops
+              ├── Supabase REST API (anon key)   — read public/runtime data, create visitors
+              └── Supabase REST API (secret key) — write messages, replies, visitors, admin ops
 ```
 
 ## Request Flow
@@ -62,7 +62,7 @@ Any page load → config.js (frontend) → GET /api/config
 Simplicity. The project targets developers who want to self-host with minimal tooling. No bundler means no dependency lock-in, easier debugging in browser DevTools, and straightforward Cloudflare Pages deployment (output directory `/`).
 
 **Why Supabase anon key in the browser?**
-Row Level Security (RLS) policies enforce that anonymous users can only insert and select — they cannot update or delete. Operations that modify data (admin actions, visitor card updates) go through Functions that use the `service_role` secret key, which is never exposed to the browser.
+Row Level Security (RLS) policies limit what the browser can do directly with the public key. Visitor creation and read-only user-facing data use the anon key; message submission and privileged writes go through Functions that use the `service_role` secret key, which is never exposed to the browser.
 
 **Why UUID in localStorage instead of cookies?**
 Cookies can be blocked by browser privacy settings and are sent with every request. localStorage UUIDs are explicit, predictable, and align with the anonymous-by-design philosophy — the visitor controls their own identity. The tradeoff is that clearing localStorage loses message history.
@@ -78,11 +78,13 @@ Rejecting messages with blocked words tells the sender exactly which words to av
 | Operation | Key used | Where |
 |-----------|----------|-------|
 | Read settings, read messages (user-facing) | `anon` | Browser → Supabase direct |
-| Send message | `anon` | Browser → `/api/message` → Supabase |
+| Send message | `service_role` | Browser → `/api/message` → Supabase |
 | Admin all operations | `service_role` | Browser → `/api/admin` → Supabase |
 | Update visitor card | `service_role` | Browser → `/api/visitor` → Supabase |
 | Check blocked words | `service_role` | `/api/message` → Supabase |
 
 The `service_role` key is only ever used inside Functions (server-side). It is stored as a Cloudflare Pages environment variable and never included in any response.
+
+Known limitation: anon read policies still expose user-facing rows directly for the current history/config flows. A future hardening pass should move private reads behind sanitized Functions or database views.
 
 Admin authentication uses a simple password check in `/api/auth`. The password is compared server-side; the browser receives a session token stored in `sessionStorage` (cleared on tab close).
