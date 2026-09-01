@@ -13,8 +13,8 @@ Browser
   └── API calls (/api/*)
         Handled by Cloudflare Pages Functions
               │
-              ├── Supabase REST API (anon key)   — read public/runtime data, create visitors
-              └── Supabase REST API (secret key) — write messages, replies, visitors, admin ops
+              ├── Supabase REST API (anon key)   — create visitors and remaining legacy direct reads
+              └── Supabase REST API (secret key) — read config, write messages, replies, visitors, admin ops
 ```
 
 ## Request Flow
@@ -49,11 +49,12 @@ Admin panel → admin.js → POST /api/admin { action: 'getMessages' }
 ```
 Any page load → config.js (frontend) → GET /api/config
   → config.js (Functions)
-      1. Fetch settings table (anon key)
-      2. Fetch featured messages (is_featured = true)
-      3. Fetch pinned messages (is_pinned = true)
-      4. If featured_auto: supplement with random messages
-  → 200 { settings, featuredBubbles, pinnedMessages }
+      1. Fetch allowlisted public settings (service_role key)
+      2. Fetch featured messages (is_featured = true, not blocked)
+      3. Fetch pinned messages (is_pinned = true, not blocked)
+      4. Fetch public board messages (is_public = true, not blocked)
+      5. If featured_auto: supplement with random non-blocked messages
+  → 200 { settings, featuredBubbles, pinnedMessages, publicMessages }
 ```
 
 ## Key Design Decisions
@@ -62,7 +63,7 @@ Any page load → config.js (frontend) → GET /api/config
 Simplicity. The project targets developers who want to self-host with minimal tooling. No bundler means no dependency lock-in, easier debugging in browser DevTools, and straightforward Cloudflare Pages deployment (output directory `/`).
 
 **Why Supabase anon key in the browser?**
-Row Level Security (RLS) policies limit what the browser can do directly with the public key. Visitor creation and read-only user-facing data use the anon key; message submission and privileged writes go through Functions that use the `service_role` secret key, which is never exposed to the browser.
+Row Level Security (RLS) policies limit what the browser can do directly with the public key. Visitor creation and remaining legacy user-facing reads use the anon key; runtime settings, message submission, and privileged writes go through Functions that use the `service_role` secret key, which is never exposed to the browser.
 
 **Why UUID in localStorage instead of cookies?**
 Cookies can be blocked by browser privacy settings and are sent with every request. localStorage UUIDs are explicit, predictable, and align with the anonymous-by-design philosophy — the visitor controls their own identity. The tradeoff is that clearing localStorage loses message history.
@@ -77,7 +78,8 @@ Rejecting messages with blocked words tells the sender exactly which words to av
 
 | Operation | Key used | Where |
 |-----------|----------|-------|
-| Read settings, read messages (user-facing) | `anon` | Browser → Supabase direct |
+| Read public settings and curated public messages | `service_role` | Browser → `/api/config` → Supabase |
+| Read personal history and replies | `anon` | Browser → Supabase direct |
 | Send message | `service_role` | Browser → `/api/message` → Supabase |
 | Admin all operations | `service_role` | Browser → `/api/admin` → Supabase |
 | Update visitor card | `service_role` | Browser → `/api/visitor` → Supabase |
@@ -85,6 +87,6 @@ Rejecting messages with blocked words tells the sender exactly which words to av
 
 The `service_role` key is only ever used inside Functions (server-side). It is stored as a Cloudflare Pages environment variable and never included in any response.
 
-Known limitation: anon read policies still expose user-facing rows directly for the current history/config flows. A future hardening pass should move private reads behind sanitized Functions or database views.
+Known limitation: anon read policies still expose user-facing rows directly for the current personal history, replies, and visitor identity flows. A future hardening pass should move those reads behind sanitized Functions or database views.
 
 Admin authentication uses a simple password check in `/api/auth`. The password is compared server-side; the browser receives a session token stored in `sessionStorage` (cleared on tab close).

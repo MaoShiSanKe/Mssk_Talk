@@ -98,6 +98,7 @@ Key-value store for runtime configuration. All values are stored as TEXT and par
 |-----|---------|------|-------------|
 | `site_title` | `留言给我` | text | Page title shown to visitors |
 | `site_description` | `你的消息会以匿名方式送达…` | text | Subtitle below title |
+| `webhook_url` | empty | text | Server-side notification webhook URL; not exposed by `/api/config` |
 | `show_history` | `false` | bool | Show message history section |
 | `allow_messages` | `true` | bool | Accept new messages |
 | `require_contact` | `false` | bool | Make contact field mandatory |
@@ -108,8 +109,10 @@ Key-value store for runtime configuration. All values are stored as TEXT and par
 | `show_featured` | `false` | bool | Enable floating message wall |
 | `featured_count` | `10` | number | Max bubbles in floating wall |
 | `featured_auto` | `true` | bool | Auto-fill bubbles from recent messages |
+| `show_public_board` | `false` | bool | Show public message board |
+| `public_board_title` | `留言板` | text | Public message board title |
 
-**RLS policies:** anon can SELECT. All writes go through Functions with `service_role` key.
+**RLS policies:** no anon policy. Public runtime configuration is served through `/api/config`, which reads settings with the `service_role` key and returns only allowlisted keys. All writes go through Functions with `service_role` key.
 
 ---
 
@@ -151,6 +154,12 @@ For deployments created before message writes were moved fully behind `/api/mess
 
 ```sql
 DROP POLICY IF EXISTS "messages_insert" ON messages;
+```
+
+For deployments created before public settings were routed fully through `/api/config`, first deploy the updated Function with `SUPABASE_SECRET_KEY` configured, then remove the old anonymous settings read policy:
+
+```sql
+DROP POLICY IF EXISTS "settings_select" ON settings;
 ```
 
 ---

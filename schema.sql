@@ -81,9 +81,8 @@ DROP POLICY IF EXISTS "messages_insert" ON messages;
 CREATE POLICY "messages_select" ON messages
   FOR SELECT USING (true);
 
--- settings：任何人可读（前端需要读取配置）
-CREATE POLICY "settings_select" ON settings
-  FOR SELECT USING (true);
+-- settings：公开配置通过 /api/config 下发；原始 settings 不对 anon 开放
+DROP POLICY IF EXISTS "settings_select" ON settings;
 
 -- replies：任何人可读（用户端展示回复）
 CREATE POLICY "replies_select" ON replies

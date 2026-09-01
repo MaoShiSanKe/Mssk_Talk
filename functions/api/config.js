@@ -2,15 +2,40 @@
 // 将配置下发给前端，包括从 Supabase settings 表读取的动态配置
 // 敏感信息（SUPABASE_SECRET_KEY、ADMIN_PASSWORD）不在这里暴露
 
+const PUBLIC_SETTING_KEYS = [
+  'site_title',
+  'site_description',
+  'show_history',
+  'allow_messages',
+  'require_contact',
+  'max_message_length',
+  'daily_limit',
+  'show_replies',
+  'show_pinned',
+  'show_featured',
+  'featured_count',
+  'featured_auto',
+  'show_public_board',
+  'public_board_title',
+];
+
 export async function onRequestGet(context) {
   const { env } = context;
 
   const supabaseUrl = env.SUPABASE_URL ?? '';
   const publishableKey = env.SUPABASE_PUBLISHABLE_KEY ?? '';
+  const secretKey = env.SUPABASE_SECRET_KEY ?? '';
+
+  if (!supabaseUrl || !publishableKey || !secretKey) {
+    return new Response(JSON.stringify({ error: 'server misconfigured' }), {
+      status: 500,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
 
   const dbHeaders = {
-    'apikey': publishableKey,
-    'Authorization': `Bearer ${publishableKey}`,
+    'apikey': secretKey,
+    'Authorization': `Bearer ${secretKey}`,
   };
 
   // 并行读取 settings 和精选留言
@@ -20,8 +45,9 @@ export async function onRequestGet(context) {
   let publicMessages = [];
 
   try {
+    const publicSettings = PUBLIC_SETTING_KEYS.join(',');
     const [settingsRes, featuredRes, pinnedRes, publicRes] = await Promise.all([
-      fetch(`${supabaseUrl}/rest/v1/settings?select=key,value`, { headers: dbHeaders }),
+      fetch(`${supabaseUrl}/rest/v1/settings?key=in.(${publicSettings})&select=key,value`, { headers: dbHeaders }),
       fetch(`${supabaseUrl}/rest/v1/messages?is_featured=eq.true&is_blocked=eq.false&is_word_blocked=eq.false&select=id,content&order=created_at.desc`, { headers: dbHeaders }),
       fetch(`${supabaseUrl}/rest/v1/messages?is_pinned=eq.true&is_blocked=eq.false&is_word_blocked=eq.false&select=id,content,created_at&order=created_at.desc`, { headers: dbHeaders }),
       fetch(`${supabaseUrl}/rest/v1/messages?is_public=eq.true&is_blocked=eq.false&is_word_blocked=eq.false&select=id,content,created_at,visitors(nickname,avatar_url)&order=created_at.desc&limit=100`, { headers: dbHeaders }),
@@ -53,7 +79,7 @@ export async function onRequestGet(context) {
       const need = featuredCount - bubbles.length;
       const featuredIds = new Set(bubbles.map(m => m.id));
       const poolRes = await fetch(
-        `${supabaseUrl}/rest/v1/messages?is_blocked=eq.false&select=id,content&order=created_at.desc&limit=200`,
+        `${supabaseUrl}/rest/v1/messages?is_blocked=eq.false&is_word_blocked=eq.false&select=id,content&order=created_at.desc&limit=200`,
         { headers: dbHeaders }
       );
       const pool = await poolRes.json();
